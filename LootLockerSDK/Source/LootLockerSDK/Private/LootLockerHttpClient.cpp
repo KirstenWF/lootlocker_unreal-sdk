@@ -77,16 +77,17 @@ bool ULootLockerHttpClient::ResponseIsValid(const FHttpResponsePtr& InResponse, 
 
 void ULootLockerHttpClient::UploadFile(const FString& endPoint, const FString& requestType, const FString& FilePath, const TMap<FString, FString> AdditionalFields, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders) const
 {
-	TArray<uint8> UpFileRawData;
-	if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath))
+    TArray<uint8> UpFileRawData;
+    if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath))
 	{
-		FLootLockerResponse FailResponse;
-		FailResponse.success = false;
-		FailResponse.FullTextFromServer = FString::Format(TEXT("Could not read file {0}"), {FilePath});
+        FLootLockerResponse FailResponse;
+        FailResponse.success = false;
+        FailResponse.FullTextFromServer = FString::Format(TEXT("Could not read file {0}"), { FilePath });
+        FailResponse.Error = FailResponse.FullTextFromServer;
 
-		onCompleteRequest.ExecuteIfBound(FailResponse);
-		return;
-	}
+        onCompleteRequest.ExecuteIfBound(FailResponse);
+        return;
+    }
 
 	int32 LastSlashPos = 0;
 	FilePath.FindLastChar('/', LastSlashPos);
@@ -117,12 +118,12 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     }
 
     Request->SetVerb(requestType);
-
-    TArray<uint8> UpFileRawData;
-    if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath)) {
+	
+    if (UpFileRawData.IsEmpty())
+	{
         FLootLockerResponse FailResponse;
         FailResponse.success = false;
-        FailResponse.FullTextFromServer = FString::Format(TEXT("Could not read file {0}"), { FilePath });
+        FailResponse.FullTextFromServer = FString::Format(TEXT("File is empty {0}"), { FileName });
         FailResponse.Error = FailResponse.FullTextFromServer;
 
         onCompleteRequest.ExecuteIfBound(FailResponse);
@@ -134,7 +135,8 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     const FString BeginBoundary = TEXT("\r\n--" + Boundary + "\r\n");
     const FString EndBoundary = TEXT("\r\n--" + Boundary + "--\r\n");
 
-    for (auto& KeyValuePair : AdditionalFields) {
+    for (auto& KeyValuePair : AdditionalFields)
+	{
         Data.Append((uint8*)TCHAR_TO_ANSI(*BeginBoundary), BeginBoundary.Len());
 
         FString ParameterEntry = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
@@ -159,22 +161,22 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     Request->SetContent(Data);
 
     Request->OnProcessRequestComplete().BindLambda([onCompleteRequest, this, requestType, endPoint](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
+    {
+        const FString ResponseString = Response->GetContentAsString();
+        FLootLockerResponse response;
+
+        response.FullTextFromServer = Response->GetContentAsString();
+        response.ServerCallStatusCode = Response->GetResponseCode();
+
+        response.success = ResponseIsValid(Response, bWasSuccessful, requestType, endPoint, FString("Data Stream"));
+        if (!response.success)
         {
-            const FString ResponseString = Response->GetContentAsString();
-            FLootLockerResponse response;
+            FLootLockerErrorResponse errorResponse;
+            FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorResponse>(response.FullTextFromServer, &errorResponse, 0, 0);
+            response.Error = FString::Format(TEXT("{0}: {1}. Trace Id: {2}"), { errorResponse.Error.IsEmpty() ? "UNKNOWN" : errorResponse.Error, errorResponse.Message.IsEmpty() ? "N/A" : errorResponse.Message, errorResponse.trace_id.IsEmpty() ? "N/A" : errorResponse.trace_id });
+        }
 
-            response.FullTextFromServer = Response->GetContentAsString();
-            response.ServerCallStatusCode = Response->GetResponseCode();
-
-            response.success = ResponseIsValid(Response, bWasSuccessful, requestType, endPoint, FString("Data Stream"));
-            if (!response.success)
-            {
-                FLootLockerErrorResponse errorResponse;
-                FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorResponse>(response.FullTextFromServer, &errorResponse, 0, 0);
-                response.Error = FString::Format(TEXT("{0}: {1}. Trace Id: {2}"), { errorResponse.Error.IsEmpty() ? "UNKNOWN" : errorResponse.Error, errorResponse.Message.IsEmpty() ? "N/A" : errorResponse.Message, errorResponse.trace_id.IsEmpty() ? "N/A" : errorResponse.trace_id });
-            }
-
-            onCompleteRequest.ExecuteIfBound(response);
-        });
+        onCompleteRequest.ExecuteIfBound(response);
+    });
     Request->ProcessRequest();
 }
