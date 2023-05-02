@@ -331,7 +331,7 @@ void ULootLockerAuthenticationRequestHandler::StartGoogleSession(const FString& 
 
 		ULootLockerCurrentPlatform::Set(ELootLockerPlatform::Google);
 		AuthRequest.platform = ULootLockerCurrentPlatform::GetString();
-		LLAPI<FLootLockerGoogleSessionResponse>::CallAPI(HttpClient, AuthRequest, ULootLockerGameEndpoints::StartSessionEndpoint, { }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerGoogleSessionResponse>::FResponseInspectorCallback::CreateLambda([](const FLootLockerGoogleSessionResponse& Response)
+		LLAPI<FLootLockerGoogleSessionResponse>::CallAPI(HttpClient, AuthRequest, ULootLockerGameEndpoints::StartGoogleSessionEndpoint, { }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerGoogleSessionResponse>::FResponseInspectorCallback::CreateLambda([](const FLootLockerGoogleSessionResponse& Response)
 			{
 				if (Response.success)
 				{
@@ -409,6 +409,86 @@ void ULootLockerAuthenticationRequestHandler::RefreshGoogleSession(const FString
 				ULootLockerCurrentPlatform::Reset();
 			}
 		}));
+}
+
+void ULootLockerAuthenticationRequestHandler::StartEpicSession(const FString& IdToken, const FEpicSessionResponseBP& OnCompletedRequestBP, const FLootLockerEpicSessionResponseDelegate& OnCompletedRequest)
+{
+	const ULootLockerConfig* config = GetDefault<ULootLockerConfig>();
+	if (config->IsLegacyAPIKey()) // TODO: <Deprecated functionality, remove in v2.1>
+	{
+		FLootLockerEpicSessionRequestWithDevelopmentMode AuthRequest(config->OnDevelopmentMode);
+		AuthRequest.game_key = config->LootLockerGameKey;
+		AuthRequest.game_version = config->GameVersion;
+		AuthRequest.id_token = IdToken;
+
+		ULootLockerCurrentPlatform::Set(ELootLockerPlatform::Epic);
+		LLAPI<FLootLockerEpicSessionResponse>::CallAPI(HttpClient, AuthRequest, ULootLockerGameEndpoints::StartEpicSessionEndpoint, { }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerEpicSessionResponse>::FResponseInspectorCallback::CreateLambda([](const FLootLockerEpicSessionResponse& Response)
+			{
+				if (Response.success)
+				{
+					ULootLockerStateData::SetPlayerIdentifier(Response.player_identifier);
+					ULootLockerStateData::SetRefreshToken(Response.refresh_token);
+				}
+				else
+				{
+					ULootLockerCurrentPlatform::Reset();
+				}
+			}));
+		return;
+	} // TODO: </Deprecated functionality, remove in v2.1>
+	FLootLockerEpicSessionRequest AuthRequest;
+	AuthRequest.game_key = config->LootLockerGameKey;
+	AuthRequest.game_version = config->GameVersion;
+	AuthRequest.id_token = IdToken;
+
+	ULootLockerCurrentPlatform::Set(ELootLockerPlatform::Epic);
+	LLAPI<FLootLockerEpicSessionResponse>::CallAPI(HttpClient, AuthRequest, ULootLockerGameEndpoints::StartEpicSessionEndpoint, { }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerEpicSessionResponse>::FResponseInspectorCallback::CreateLambda([](const FLootLockerEpicSessionResponse& Response)
+		{
+			if (Response.success)
+			{
+				ULootLockerStateData::SetPlayerIdentifier(Response.player_identifier);
+				ULootLockerStateData::SetRefreshToken(Response.refresh_token);
+			}
+			else
+			{
+				ULootLockerCurrentPlatform::Reset();
+			}
+		}));
+}
+
+void ULootLockerAuthenticationRequestHandler::RefreshEpicSession(const FString& RefreshToken, const FEpicSessionResponseBP& OnCompletedRequestBP, const FLootLockerEpicSessionResponseDelegate& OnCompletedRequest)
+{
+	const ULootLockerConfig* config = GetDefault<ULootLockerConfig>();
+	const auto InspectionLambda = LLAPI<FLootLockerEpicSessionResponse>::FResponseInspectorCallback::CreateLambda([](const FLootLockerEpicSessionResponse& Response)
+		{
+			if (Response.success)
+			{
+				ULootLockerStateData::SetPlayerIdentifier(Response.player_identifier);
+				ULootLockerStateData::SetRefreshToken(Response.refresh_token);
+			}
+			else
+			{
+				ULootLockerCurrentPlatform::Reset();
+			}
+		});
+	if (config->IsLegacyAPIKey()) // TODO: <Deprecated functionality, remove in v2.1>
+	{
+		FLootLockerRefreshEpicSessionRequestWithDevelopmentMode AuthRequest(config->OnDevelopmentMode);
+		AuthRequest.game_key = config->LootLockerGameKey;
+		AuthRequest.game_version = config->GameVersion;
+		AuthRequest.refresh_token = RefreshToken.IsEmpty() ? ULootLockerStateData::GetRefreshToken() : RefreshToken;
+
+		ULootLockerCurrentPlatform::Set(ELootLockerPlatform::Epic);
+		LLAPI<FLootLockerEpicSessionResponse>::CallAPI(HttpClient, AuthRequest, ULootLockerGameEndpoints::RefreshEpicSessionEndpoint, { }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, InspectionLambda);
+		return;
+	} // TODO: </Deprecated functionality, remove in v2.1>
+	FLootLockerRefreshEpicSessionRequest AuthRequest;
+	AuthRequest.game_key = config->LootLockerGameKey;
+	AuthRequest.game_version = config->GameVersion;
+	AuthRequest.refresh_token = RefreshToken.IsEmpty() ? ULootLockerStateData::GetRefreshToken() : RefreshToken;
+
+	ULootLockerCurrentPlatform::Set(ELootLockerPlatform::Epic);
+	LLAPI<FLootLockerEpicSessionResponse>::CallAPI(HttpClient, AuthRequest, ULootLockerGameEndpoints::RefreshEpicSessionEndpoint, { }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, InspectionLambda);
 }
 
 void ULootLockerAuthenticationRequestHandler::StartAmazonLunaSession(const FString& AmazonLunaGuid, const FAuthResponseBP& OnCompletedRequestBP, const FLootLockerSessionResponse& OnCompletedRequest)
