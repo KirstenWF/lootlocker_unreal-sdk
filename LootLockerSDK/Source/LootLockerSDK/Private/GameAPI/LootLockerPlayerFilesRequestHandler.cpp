@@ -26,9 +26,47 @@ void ULLPlayerFilesRequestHandler::UploadFile(const FLootLockerFileUploadRequest
 	}));
 }
 
+void ULLPlayerFilesRequestHandler::UploadRawFile(const FLootLockerRawFileUploadRequest &Request, const FLootLockerUploadFileBP &OnCompleteBP, const FLootLockerUploadFileDelegate &OnComplete)
+{
+	TMap<FString, FString> AdditionalData;
+	AdditionalData.Add(TEXT("purpose"), *Request.Purpose);
+	AdditionalData.Add(TEXT("public"), Request.IsPublic ? TEXT("true") : TEXT("false"));
+	
+	TArray<uint8> Bytes;
+	Bytes.SetNumUninitialized(Request.FileContentAsString.Len());
+	StringToBytes(Request.FileContentAsString, Bytes.GetData(), Bytes.Num());
+
+	LLAPI<FLootLockerPlayerFileResponse>::UploadRawDataAPI(HttpClient, Bytes, Request.FileName, ULootLockerGameEndpoints::FileUploadEndpoint, { }, AdditionalData, OnCompleteBP, OnComplete, LLAPI<FLootLockerPlayerFileResponse>::FResponseInspectorCallback::CreateLambda([](FLootLockerPlayerFileResponse& Response)
+	{
+		if (Response.success)
+		{
+			// Add "public" to is_public field manually if it exists
+            const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
+			Response.IsPublic = JsonObject->GetBoolField("public");
+		}
+	}));
+}
+
 void ULLPlayerFilesRequestHandler::UpdateFile(const int32 FileId, const FLootLockerFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnCompleteBP, const FLootLockerUploadFileDelegate& OnComplete)
 {
 	LLAPI<FLootLockerPlayerFileResponse>::UploadFileAPI(HttpClient, Request.file, ULootLockerGameEndpoints::FileUpdateEndpoint, { FileId }, TMap<FString, FString>(), OnCompleteBP, OnComplete, LLAPI<FLootLockerPlayerFileResponse>::FResponseInspectorCallback::CreateLambda([](FLootLockerPlayerFileResponse& Response)
+	{
+		if (Response.success)
+		{
+			// Add "public" to is_public field manually if it exists
+			const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
+			Response.IsPublic = JsonObject->GetBoolField("public");
+		}
+	}));
+}
+
+void ULLPlayerFilesRequestHandler::UpdateRawFile(const int32 FileId, const FLootLockerRawFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnCompleteBP, const FLootLockerUploadFileDelegate& OnComplete)
+{	
+	TArray<uint8> Bytes;
+	Bytes.SetNumUninitialized(Request.FileContentAsString.Len());
+	StringToBytes(Request.FileContentAsString, Bytes.GetData(), Bytes.Num());
+	
+	LLAPI<FLootLockerPlayerFileResponse>::UploadRawDataAPI(HttpClient, Bytes, Request.FileName, ULootLockerGameEndpoints::FileUpdateEndpoint, { FileId }, TMap<FString, FString>(), OnCompleteBP, OnComplete, LLAPI<FLootLockerPlayerFileResponse>::FResponseInspectorCallback::CreateLambda([](FLootLockerPlayerFileResponse& Response)
 	{
 		if (Response.success)
 		{

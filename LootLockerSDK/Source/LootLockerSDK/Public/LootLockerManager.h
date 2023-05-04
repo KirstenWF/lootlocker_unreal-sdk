@@ -497,8 +497,17 @@ public:
      */
 	UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Files")
 	static void UploadFile(const FLootLockerFileUploadRequest& Request, const FLootLockerUploadFileBP& OnComplete);
-
+	
     /**
+     * Upload a file with the provided name and content. The file will be owned by the currently active player.
+     * https://ref.lootlocker.com/game-api/#upload-a-file
+     *
+     * @param Request Request of type FLootLockerRawFileUploadRequest.
+     * @param OnComplete Delegate for handling the response
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Files")
+	static void UploadRawFile(const FLootLockerRawFileUploadRequest& Request, const FLootLockerUploadFileBP& OnComplete);
+	/**
      * Update the specified file with the supplied content. The file will be owned by the currently active player.
      * https://ref.lootlocker.com/game-api/#update-a-file
      *
@@ -509,7 +518,18 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Files")
     static void UpdateFile(const int32 FileId, const FLootLockerFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnComplete);
 
-    /**
+	/**
+     * Update the specified file with the supplied content. The file will be owned by the currently active player.
+     * https://ref.lootlocker.com/game-api/#update-a-file
+     *
+     * @param FileId Id of the file, can be retrieved with ListFiles or when the file is uploaded
+     * @param Request Request of type FLootLockerRawFileUpdateRequest.
+     * @param OnComplete Delegate for handling the response
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Files")
+	static void UpdateRawFile(const int32 FileId, const FLootLockerRawFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnComplete);
+
+	/**
      * Returns all the files that your currently active player own.
      * https://ref.lootlocker.com/game-api/#list-files
      *
@@ -1721,7 +1741,7 @@ public:
 	static void Server_GetPlayerFile(const FString& PlayerId, int FileId, const FLootLockerServerGetPlayerFileResponseDelegateBP& OnCompletedRequestBP);
 
 	/**
-	* Use this endpoint for listing the files that your currently active player own.
+	* Use this endpoint to upload a file to a players file storage.
 	*
 	* @param PlayerId - players id or their public UID.
 	* @param FileName - file name
@@ -1733,7 +1753,19 @@ public:
 	static void Server_UploadPlayerFile(const FString& PlayerId, const FString& FileName, const FString& ContentAsString, const FString& Purpose, const FLootLockerServerUploadPlayerFileResponseDelegateBP& OnCompletedRequestBP);
 
 	/**
-	* Use this endpoint for listing the files that your currently active player own.
+	* Use this endpoint to update a file, updating a file will create a new revision of that file, the system will keep last 5 revisions.
+	*
+	* @param PlayerId - players id or their public UID.
+	* @param FileId - FileId to update.
+	* @param FileName - file name
+	* @param ContentAsString - file content as string
+	* https://ref.lootlocker.com/server-api/#update-a-file
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Player Files")
+	static void Server_UpdatePlayerFile(const FString& PlayerId, int FileId, const FString& FileName, const FString& ContentAsString, const FLootLockerServerUpdatePlayerFileResponseDelegateBP& OnCompletedRequestBP);
+	
+	/**
+	* If you need to delete a file, this endpoint will allow you to do that.
 	*
 	* @param PlayerId - players id or their public UID.
 	* @param FileId - FileId to delete.

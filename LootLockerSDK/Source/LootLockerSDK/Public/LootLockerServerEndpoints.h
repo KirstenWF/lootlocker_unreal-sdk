@@ -24,6 +24,7 @@ public:
 	static FLootLockerEndPoints UploadPlayerFile;
 	static FLootLockerEndPoints ListPlayerFiles;
 	static FLootLockerEndPoints GetPlayerFile;
+	static FLootLockerEndPoints UpdatePlayerFile;
 	static FLootLockerEndPoints DeletePlayerFile;
     
 private:

@@ -21,12 +21,38 @@ struct FLootLockerFileUploadRequest
 };
 
 USTRUCT(BlueprintType)
+struct FLootLockerRawFileUploadRequest
+{
+    GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString FileName;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString FileContentAsString;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString Purpose;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    bool IsPublic = false;
+};
+
+USTRUCT(BlueprintType)
 struct FLootLockerFileUpdateRequest
 {
 	GENERATED_BODY()
 	// Path to the file
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
 	FString file;
+};
+
+USTRUCT(BlueprintType)
+struct FLootLockerRawFileUpdateRequest
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString FileName;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString FileContentAsString;
 };
 
 USTRUCT(BlueprintType)
@@ -105,6 +131,10 @@ public:
     static ULootLockerHttpClient* HttpClient;
     static void UploadFile(const FLootLockerFileUploadRequest& Request, const FLootLockerUploadFileBP& OnCompleteBP = FLootLockerUploadFileBP(), const FLootLockerUploadFileDelegate& OnComplete = FLootLockerUploadFileDelegate());
     static void UpdateFile(const int32 FileId, const FLootLockerFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnCompleteBP = FLootLockerUploadFileBP(), const FLootLockerUploadFileDelegate& OnComplete = FLootLockerUploadFileDelegate());
+	
+	static void UploadRawFile(const FLootLockerRawFileUploadRequest& Request, const FLootLockerUploadFileBP& OnCompleteBP = FLootLockerUploadFileBP(), const FLootLockerUploadFileDelegate& OnComplete = FLootLockerUploadFileDelegate());
+    static void UpdateRawFile(const int32 FileId, const FLootLockerRawFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnCompleteBP = FLootLockerUploadFileBP(), const FLootLockerUploadFileDelegate& OnComplete = FLootLockerUploadFileDelegate());
+
 	static void ListFiles(const FLootLockerFileListBP& OnCompleteBP, const FLootLockerFileListDelegate& OnComplete);
 	static void ListOtherPlayersPublicFiles(const int32 PlayerID, const FLootLockerFileListBP& OnCompleteBP = FLootLockerFileListBP(), const FLootLockerFileListDelegate& OnComplete = FLootLockerFileListDelegate());
 	static void GetSingleFile(const int32 FileID, const FLootLockerUploadFileBP& OnCompleteBP = FLootLockerUploadFileBP(), const FLootLockerUploadFileDelegate& OnComplete = FLootLockerUploadFileDelegate());

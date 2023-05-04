@@ -20,7 +20,9 @@ void ULootLockerServerPlayerFileRequestHandler::ListPlayerFiles(const FString& P
 
 void ULootLockerServerPlayerFileRequestHandler::GetPlayerFile(const FString& PlayerId, int FileId, const FLootLockerServerGetPlayerFileResponseDelegateBP& OnCompletedRequestBP /*= FLootLockerServerGetPlayerFileResponseDelegateBP()*/, const FLootLockerServerGetPlayerFileResponseDelegate& OnCompletedRequest /*= FLootLockerServerGetPlayerFileResponseDelegate()*/)
 {
-	LLAPI<FLootLockerResponse>::CallServerAPI(HttpClient, LootLockerEmptyRequest, ULootLockerServerEndpoints::GetPlayerFile, { PlayerId, FileId}, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerResponse>::FResponseInspectorCallback());
+	LLAPI<FLootLockerServerPlayerFileResponse>::CallServerAPI(HttpClient, LootLockerEmptyRequest, ULootLockerServerEndpoints::GetPlayerFile, { PlayerId, FileId}, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerServerPlayerFileResponse>::FResponseInspectorCallback::CreateLambda([](FLootLockerServerPlayerFileResponse& Response)
+	{
+	}));
 }
 
 void ULootLockerServerPlayerFileRequestHandler::UploadPlayerFile(const FString& PlayerId, const FString& FileName, const FString& ContentAsString, const FString& Purpose, const FLootLockerServerUploadPlayerFileResponseDelegateBP& OnCompletedRequestBP /*= FLootLockerServerUploadPlayerFileResponseDelegateBP()*/, const FLootLockerServerUploadPlayerFileResponseDelegate& OnCompletedRequest /*= FLootLockerServerUploadPlayerFileResponseDelegate()*/)
@@ -37,11 +39,20 @@ void ULootLockerServerPlayerFileRequestHandler::UploadPlayerFile(const FString& 
 
 	LLAPI<FLootLockerServerPlayerFileResponse>::UploadRawDataAPI(HttpClient, Bytes, FileName, ULootLockerServerEndpoints::UploadPlayerFile, {PlayerId}, AdditionalData, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerServerPlayerFileResponse>::FResponseInspectorCallback::CreateLambda([](FLootLockerServerPlayerFileResponse& Response)
 	{
-		if (Response.success)
-		{
-			// Add "public" to is_public field manually if it exists
-			const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-		}
+	}), CustomHeaders);
+}
+
+void ULootLockerServerPlayerFileRequestHandler::UpdatePlayerFile(const FString& PlayerId, int FileId, const FString& FileName, const FString& ContentAsString, const FLootLockerServerUpdatePlayerFileResponseDelegateBP& OnCompletedRequestBP /*= FLootLockerServerUpdatePlayerFileResponseDelegateBP()*/, const FLootLockerServerUpdatePlayerFileResponseDelegate& OnCompletedRequest /*= FLootLockerServerUpdatePlayerFileResponseDelegate()*/)
+{
+	TArray<uint8> Bytes;
+	Bytes.SetNumUninitialized(ContentAsString.Len());
+	StringToBytes(ContentAsString, Bytes.GetData(), Bytes.Num());
+
+	TMap<FString, FString> CustomHeaders;
+	CustomHeaders.Add(TEXT("x-auth-token"), ULootLockerStateData::GetServerToken());
+
+	LLAPI<FLootLockerServerPlayerFileResponse>::UploadRawDataAPI(HttpClient, Bytes, FileName, ULootLockerServerEndpoints::UpdatePlayerFile, {PlayerId, FileId}, {}, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerServerPlayerFileResponse>::FResponseInspectorCallback::CreateLambda([](FLootLockerServerPlayerFileResponse& Response)
+	{
 	}), CustomHeaders);
 }
 

@@ -35,9 +35,6 @@ struct FLootLockerServerPlayerFileResponse : public FLootLockerResponse
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
 	FString Created_at = "";
 
-	UPROPERTY(BlueprintReadOnly, Category = "LootLocker")
-	FString FileContentAsString = "";
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
 	bool IsPublic = false;
 };
@@ -52,13 +49,15 @@ struct FLootLockerServerListPlayerFilesResponse : public FLootLockerResponse
 };
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerServerListPlayerFilesResponseDelegateBP, FLootLockerServerListPlayerFilesResponse, Response);
-DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerServerGetPlayerFileResponseDelegateBP, FLootLockerResponse, Response);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerServerGetPlayerFileResponseDelegateBP, FLootLockerServerPlayerFileResponse, Response);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerServerUploadPlayerFileResponseDelegateBP, FLootLockerServerPlayerFileResponse, Response);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerServerUpdatePlayerFileResponseDelegateBP, FLootLockerServerPlayerFileResponse, Response);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerServerDeletePlayerFileResponseDelegateBP, FLootLockerResponse, Response);
 
 DECLARE_DELEGATE_OneParam(FLootLockerServerListPlayerFilesResponseDelegate, FLootLockerServerListPlayerFilesResponse);
-DECLARE_DELEGATE_OneParam(FLootLockerServerGetPlayerFileResponseDelegate, FLootLockerResponse);
+DECLARE_DELEGATE_OneParam(FLootLockerServerGetPlayerFileResponseDelegate, FLootLockerServerPlayerFileResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerServerUploadPlayerFileResponseDelegate, FLootLockerServerPlayerFileResponse);
+DECLARE_DELEGATE_OneParam(FLootLockerServerUpdatePlayerFileResponseDelegate, FLootLockerServerPlayerFileResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerServerDeletePlayerFileResponseDelegate, FLootLockerResponse);
 
 UCLASS()
@@ -72,7 +71,8 @@ public:
 	static void GetPlayerFile(const FString& PlayerId, int FileId, const FLootLockerServerGetPlayerFileResponseDelegateBP& OnCompletedRequestBP = FLootLockerServerGetPlayerFileResponseDelegateBP(), const FLootLockerServerGetPlayerFileResponseDelegate& OnCompletedRequest = FLootLockerServerGetPlayerFileResponseDelegate());
 
 	static void UploadPlayerFile(const FString& PlayerId, const FString& FileName, const FString& ContentAsString, const FString& Purpose, const FLootLockerServerUploadPlayerFileResponseDelegateBP& OnCompletedRequestBP = FLootLockerServerUploadPlayerFileResponseDelegateBP(), const FLootLockerServerUploadPlayerFileResponseDelegate& OnCompletedRequest = FLootLockerServerUploadPlayerFileResponseDelegate());
-
+	static void UpdatePlayerFile(const FString& PlayerId, int FileId, const FString& FileName, const FString& ContentAsString, const FLootLockerServerUpdatePlayerFileResponseDelegateBP& OnCompletedRequestBP = FLootLockerServerUpdatePlayerFileResponseDelegateBP(), const FLootLockerServerUploadPlayerFileResponseDelegate& OnCompletedRequest = FLootLockerServerUploadPlayerFileResponseDelegate());
+	
 	static void DeletePlayerFile(const FString& PlayerId, int FileId, const FLootLockerServerDeletePlayerFileResponseDelegateBP& OnCompletedRequestBP = FLootLockerServerDeletePlayerFileResponseDelegateBP(), const FLootLockerServerDeletePlayerFileResponseDelegate& OnCompletedRequest = FLootLockerServerDeletePlayerFileResponseDelegate());
 
 public:

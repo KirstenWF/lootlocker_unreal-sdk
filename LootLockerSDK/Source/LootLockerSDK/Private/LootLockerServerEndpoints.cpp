@@ -18,6 +18,7 @@ FLootLockerEndPoints ULootLockerServerEndpoints::GetEntirePersistentStorageEndpo
 FLootLockerEndPoints ULootLockerServerEndpoints::UploadPlayerFile = InitEndpoint("players/{0}/files", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerServerEndpoints::ListPlayerFiles = InitEndpoint("players/{0}/files", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerServerEndpoints::GetPlayerFile = InitEndpoint("players/{0}/files/{1}", ELootLockerHTTPMethod::GET);
+FLootLockerEndPoints ULootLockerServerEndpoints::UpdatePlayerFile = InitEndpoint("players/{0}/files/{1}", ELootLockerHTTPMethod::PUT);
 FLootLockerEndPoints ULootLockerServerEndpoints::DeletePlayerFile = InitEndpoint("players/{0}/files/{1}", ELootLockerHTTPMethod::DELETE);
 
 FLootLockerEndPoints ULootLockerServerEndpoints::InitEndpoint(const FString& Endpoint, ELootLockerHTTPMethod Method)

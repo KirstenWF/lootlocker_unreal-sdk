@@ -216,9 +216,19 @@ void ULootLockerManager::UploadFile(const FLootLockerFileUploadRequest &Request,
 	ULLPlayerFilesRequestHandler::UploadFile(Request, OnComplete);
 }
 
+void ULootLockerManager::UploadRawFile(const FLootLockerRawFileUploadRequest &Request, const FLootLockerUploadFileBP &OnComplete)
+{
+	ULLPlayerFilesRequestHandler::UploadRawFile(Request, OnComplete);
+}
+
 void ULootLockerManager::UpdateFile(const int32 FileId, const FLootLockerFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnComplete)
 {
     ULLPlayerFilesRequestHandler::UpdateFile(FileId, Request, OnComplete);
+}
+
+void ULootLockerManager::UpdateRawFile(const int32 FileId, const FLootLockerRawFileUpdateRequest& Request, const FLootLockerUploadFileBP& OnComplete)
+{
+    ULLPlayerFilesRequestHandler::UpdateRawFile(FileId, Request, OnComplete);
 }
 
 void ULootLockerManager::ListFiles(const FLootLockerFileListBP &OnComplete)
@@ -803,6 +813,11 @@ void ULootLockerManager::Server_GetPlayerFile(const FString& PlayerId, int FileI
 void ULootLockerManager::Server_UploadPlayerFile(const FString& PlayerId, const FString& FileName, const FString& ContentAsString, const FString& Purpose, const FLootLockerServerUploadPlayerFileResponseDelegateBP& OnCompletedRequestBP)
 {
 	ULootLockerServerPlayerFileRequestHandler::UploadPlayerFile(PlayerId, FileName, ContentAsString, Purpose, OnCompletedRequestBP);
+}
+
+void ULootLockerManager::Server_UpdatePlayerFile(const FString& PlayerId, int FileId, const FString& FileName, const FString& ContentAsString, const FLootLockerServerUpdatePlayerFileResponseDelegateBP& OnCompletedRequestBP)
+{
+	ULootLockerServerPlayerFileRequestHandler::UpdatePlayerFile(PlayerId, FileId, FileName, ContentAsString, OnCompletedRequestBP);
 }
 
 void ULootLockerManager::Server_DeletePlayerFile(const FString& PlayerId, int FileId, const FLootLockerServerDeletePlayerFileResponseDelegateBP& OnCompletedRequestBP)
