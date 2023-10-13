@@ -2,19 +2,18 @@
 
 
 #include "LootLockerStateData.h"
-
 #include "LootLockerConfig.h"
 #include "LootLockerPersistedState.h"
 #include "Kismet/GameplayStatics.h"
-#include "Launch/Resources/Version.h"
 
 FString ULootLockerStateData::Token = "";
-FString ULootLockerStateData::ServerToken = "";
 FString ULootLockerStateData::SteamToken = "";
+FString ULootLockerStateData::ServerToken = "";
 FString ULootLockerStateData::RefreshToken = "";
 FString ULootLockerStateData::PlayerIdentifier = FGenericPlatformMisc::GetDeviceId != nullptr ? FGenericPlatformMisc::GetDeviceId() : FGuid::NewGuid().ToString();
 FString ULootLockerStateData::WhiteLabelEmail = "";
 FString ULootLockerStateData::WhiteLabelToken = "";
+FString ULootLockerStateData::LastActivePlatform = "";
 bool ULootLockerStateData::StateLoaded = false;
 
 #if ENGINE_MAJOR_VERSION < 5
@@ -37,6 +36,7 @@ void ULootLockerStateData::LoadStateFromDiskIfNeeded()
 		RefreshToken = LoadedState->RefreshToken;
 		WhiteLabelEmail = LoadedState->WhiteLabelEmail;
 		WhiteLabelToken = LoadedState->WhiteLabelToken;
+		LastActivePlatform = LoadedState->LastActivePlatform;
 
 		UE_LOG(LogLootLockerGameSDK, Log, TEXT("Loaded LootLocker state from disk"));
 		StateLoaded = true;
@@ -56,6 +56,7 @@ void ULootLockerStateData::SaveStateToDisk()
 		SavedState->RefreshToken = RefreshToken;
 		SavedState->WhiteLabelEmail = WhiteLabelEmail;
 		SavedState->WhiteLabelToken = WhiteLabelToken;
+		SavedState->LastActivePlatform = LastActivePlatform;
 
 		if (UGameplayStatics::SaveGameToSlot(SavedState, SaveSlot, SaveIndex)) {
 			UE_LOG(LogLootLockerGameSDK, Log, TEXT("Saved LootLocker state to disk"));
@@ -107,6 +108,12 @@ FString ULootLockerStateData::GetWhiteLabelToken()
 	return WhiteLabelToken;
 }
 
+FString ULootLockerStateData::GetLastActivePlatform()
+{
+	LoadStateFromDiskIfNeeded();
+	return LastActivePlatform;
+}
+
 void ULootLockerStateData::SetToken(FString InToken) {
 	LoadStateFromDiskIfNeeded();
 	if(InToken.Equals(Token)) {
@@ -115,7 +122,6 @@ void ULootLockerStateData::SetToken(FString InToken) {
 	Token = InToken;
 	SaveStateToDisk();
 }
-
 void ULootLockerStateData::SetServerToken(FString InServerToken)
 {
 	LoadStateFromDiskIfNeeded();
@@ -125,9 +131,7 @@ void ULootLockerStateData::SetServerToken(FString InServerToken)
 	}
 	ServerToken = InServerToken;
 	SaveStateToDisk();
-
 }
-
 void ULootLockerStateData::SetSteamToken(FString InSteamToken) {
 	LoadStateFromDiskIfNeeded();
 	if (InSteamToken.Equals(SteamToken)) {
@@ -136,7 +140,6 @@ void ULootLockerStateData::SetSteamToken(FString InSteamToken) {
 	SteamToken = InSteamToken;
 	SaveStateToDisk();
 }
-
 void ULootLockerStateData::SetRefreshToken(FString InRefreshToken) {
 	LoadStateFromDiskIfNeeded();
 	if (InRefreshToken.Equals(RefreshToken)) {
@@ -145,7 +148,6 @@ void ULootLockerStateData::SetRefreshToken(FString InRefreshToken) {
 	RefreshToken = InRefreshToken;
 	SaveStateToDisk();
 }
-
 void ULootLockerStateData::SetPlayerIdentifier(FString InPlayerIdentifier) {
 	LoadStateFromDiskIfNeeded();
 	if (InPlayerIdentifier.Equals(PlayerIdentifier)) {
@@ -154,7 +156,6 @@ void ULootLockerStateData::SetPlayerIdentifier(FString InPlayerIdentifier) {
 	PlayerIdentifier = InPlayerIdentifier;
 	SaveStateToDisk();
 }
-
 void ULootLockerStateData::SetWhiteLabelEmail(FString InWhiteLabelEmail) {
 	LoadStateFromDiskIfNeeded();
 	if (InWhiteLabelEmail.Equals(WhiteLabelEmail)) {
@@ -163,13 +164,21 @@ void ULootLockerStateData::SetWhiteLabelEmail(FString InWhiteLabelEmail) {
 	WhiteLabelEmail = InWhiteLabelEmail;
 	SaveStateToDisk();
 }
-
 void ULootLockerStateData::SetWhiteLabelToken(FString InWhiteLabelToken) {
 	LoadStateFromDiskIfNeeded();
 	if (InWhiteLabelToken.Equals(WhiteLabelToken)) {
 		return;
 	}
 	WhiteLabelToken = InWhiteLabelToken;
+	SaveStateToDisk();
+}
+
+void ULootLockerStateData::SetLastActivePlatform(FString InLastActivePlatform) {
+	LoadStateFromDiskIfNeeded();
+	if (InLastActivePlatform.Equals(LastActivePlatform)) {
+		return;
+	}
+	LastActivePlatform = InLastActivePlatform;
 	SaveStateToDisk();
 }
 

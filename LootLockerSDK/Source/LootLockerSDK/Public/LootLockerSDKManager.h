@@ -3,26 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameAPI/LootLockerAuthenticationRequestHandler.h"
-#include "LootLockerConfig.h"
-#include "GameAPI/LootLockerPlayerRequestHandler.h"
-#include "GameAPI/LootLockerCharacterRequestHandler.h"
-#include "GameAPI/LootLockerPersistentStorageRequestHandler.h"
-#include "GameAPI/LootLockerAssetsRequestHandler.h"
+#include "GameAPI/LootLockerAccountLinkRequestHandler.h"
 #include "GameAPI/LootLockerAssetInstancesRequestHandler.h"
-#include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
-#include "GameAPI/LootLockerMissionsRequestHandler.h"
-#include "GameAPI/LootLockerMapsRequestHandler.h"
-#include "GameAPI/LootLockerPurchasesRequestHandler.h"
-#include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
+#include "GameAPI/LootLockerAssetsRequestHandler.h"
+#include "GameAPI/LootLockerAuthenticationRequestHandler.h"
+#include "GameAPI/LootLockerCharacterRequestHandler.h"
 #include "GameAPI/LootLockerCollectablesRequestHandler.h"
-#include "GameAPI/LootLockerMessagesRequestHandler.h"
-#include "GameAPI/LootLockerLeaderboardRequestHandler.h"
 #include "GameAPI/LootLockerDropTablesRequestHandler.h"
 #include "GameAPI/LootLockerHeroRequestHandler.h"
-#include "GameAPI/LootLockerPlayerFilesRequestHandler.h"
+#include "GameAPI/LootLockerLeaderboardRequestHandler.h"
+#include "GameAPI/LootLockerMapsRequestHandler.h"
+#include "GameAPI/LootLockerMessagesRequestHandler.h"
 #include "GameAPI/LootLockerMiscellaneousRequestHandler.h"
+#include "GameAPI/LootLockerMissionsRequestHandler.h"
+#include "GameAPI/LootLockerPersistentStorageRequestHandler.h"
+#include "GameAPI/LootLockerPlayerFilesRequestHandler.h"
+#include "GameAPI/LootLockerPlayerRequestHandler.h"
 #include "GameAPI/LootLockerProgressionsRequestHandler.h"
+#include "GameAPI/LootLockerPurchasesRequestHandler.h"
+#include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
+#include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
+#include "LootLockerConfig.h"
+#include "LootLockerPlatformManager.h"
 
 #include "ServerAPI/LootLockerServerAuthenticationRequestHandler.h"
 #include "ServerAPI/LootLockerServerPersistentStorageRequestHandler.h"
@@ -123,6 +125,18 @@ public:
     static void StartGoogleSession(const FString& IdToken, const FLootLockerGoogleSessionResponseDelegate& OnCompletedRequest);
 
     /**
+     * Start a session for a Google user
+     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * The desired Google sign in platform must be enabled in the web console for this to work.
+     * https://ref.lootlocker.io/game-api/#sign-in-with-google
+     *
+     * @param IdToken The Id Token from your Google Sign In
+     * @param Platform Google OAuth2 ClientID platform
+     * @param OnCompletedRequest Delegate for handling the server response.
+     */
+    static void StartGoogleSessionForPlatform(const FString& IdToken, ELootLockerGoogleClientPlatform Platform, const FLootLockerGoogleSessionResponseDelegate& OnCompletedRequest);
+
+    /**
      * Refresh a previous session signed in with Google
      * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
      * The Google sign in platform must be enabled in the web console for this to work.
@@ -177,6 +191,43 @@ public:
     static void RefreshAppleSession(const FString& RefreshToken, const FLootLockerAppleSessionResponseDelegate& OnCompletedRequest);
 
     /**
+    * Create a new session for Sign in with Apple Game Center
+    * The Apple sign in platform must be enabled in the web console for this to work.
+    * https://ref.lootlocker.com/game-api/#sign-in-with-apple-game-center
+    *
+    * @param BundleId the Apple Game Center bundle id of your app
+    * @param PlayerId the user's player id in Apple Game Center
+    * @param PublicKeyUrl The url of the public key generated from Apple Game Center Identity Verification
+    * @param Signature the signature generated from Apple Game Center Identity Verification
+    * @param Salt the salt of the signature generated from Apple Game Center Identity Verification
+    * @param Timestamp the timestamp of the verification generated from Apple Game Center Identity Verification
+    * @param OnStartedAppleGameCenterSessionCompleted Delegate for handling the response of type  for handling the response of type FLootLockerAppleGameCenterSessionResponse
+    */
+    static void StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseBP& OnStartedAppleGameCenterSessionCompleted);
+
+    /**
+    * Refresh a previous session signed in with Apple Game Center
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+    * The Apple sign in platform must be enabled in the web console for this to work.
+    * https://ref.lootlocker.com/game-api/#sign-in-with-apple-game-center
+    *
+    * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAppleSessionResponse
+    */
+    static void RefreshAppleGameCenterSession(const FLootLockerAppleGameCenterSessionResponseDelegate& OnCompletedRequest) { RefreshAppleGameCenterSession("", OnCompletedRequest); };
+
+    /**
+    * Refresh a previous session signed in with Apple Game Center
+    * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+    * The Apple sign in platform must be enabled in the web console for this to work.
+    * https://ref.lootlocker.com/game-api/#sign-in-with-apple-game-center
+    *
+    * @param RefreshToken (Optional) Token received in response from StartAppleSession request. If not supplied we will attempt to resolve it from stored player data.
+    * @param OnRefreshAppleGameCenterSessionCompleted Delegate for handling the response of type FLootLockerAppleGameCenterResponse
+    */
+    static void RefreshAppleGameCenterSession(const FString& RefreshToken, const FLootLockerAppleGameCenterSessionResponseDelegate& OnRefreshAppleGameCenterSessionCompleted);
+
+
+    /**
      * Start a session for an Epic Online Services (EOS) user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
      * The Epic sign in platform must be enabled in the web console for this to work.
@@ -208,6 +259,37 @@ public:
      * @param OnCompletedRequest Delegate for handling the response
      */
     static void RefreshEpicSession(const FString& RefreshToken, const FLootLockerEpicSessionResponseDelegate& OnCompletedRequest);
+
+    /**
+     * Start a session for an Meta / Oculus user
+     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * The Meta platform must be enabled in the web console for this to work.
+     *
+     * @param UserId The id recieved from Oculus
+     * @param Nonce The nonce recieved from Oculus
+     * @param OnMetaSessionRequestCompleted Delegate for handling the server response.
+     */
+    static void StartMetaSession(const FString& UserId, const FString& Nonce, const FLootLockerMetaSessionResponseDelegate& OncompletedRequest);
+
+    /**
+     * Refresh a previous session signed in with Meta
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+     * The Meta platform must be enabled in the web console for this to work.
+     *
+     * @param RefreshToken (Optional) Token received in response from StartMetaSession request. If not supplied we will attempt to resolve it from stored player data.
+     * @param OnRefreshEpicSessionCompleted Delegate for handling the response
+     */
+    static void RefreshMetaSession(const FLootLockerMetaSessionResponseDelegate& OncompletedRequest) { RefreshMetaSession("", OncompletedRequest); };
+    
+    /**
+     * Refresh a previous session signed in with Meta
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+     * The Meta platform must be enabled in the web console for this to work.
+     *
+     * @param RefreshToken (Optional) Token received in response from StartMetaSession request. If not supplied we will attempt to resolve it from stored player data.
+     * @param OnRefreshEpicSessionCompleted Delegate for handling the response
+     */
+    static void RefreshMetaSession(const FString& RefreshToken, const FLootLockerMetaSessionResponseDelegate& OncompletedRequest);
 
     /**
      * Start a guest session with an identifier, you can use something like a unique device identifier to tie the account to a device.
@@ -334,6 +416,52 @@ public:
      * @param OnCompletedRequest Delegate for handling the response of type FLootLockerResponse
      */
     static void WhiteLabelRequestPasswordReset(const FString& Email, const FLootLockerDefaultDelegate& OnCompletedRequest);
+
+#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
+    //==================================================
+	// Account Linking https://ref.lootlocker.com/game-api/#universal-auth
+    //==================================================
+
+    /**
+     * Start an account linking process on behalf of the currently signed in player
+     * When you want to link an additional provider to a player, you start by initiating an account link. The player can then navigate to the online link flow using the code_page_url and code, or the qr_code and continue the linking process.
+     * For the duration of the linking process you can check the status using the CheckAccountLinkingProcessStatus method.
+     * Returned from this method is the ID of the linking process, make sure to save that so that you can check the status of the process later.
+     * https://ref.lootlocker.com/game-api/#start-account-link
+     *
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkStartResponse
+     */
+    static void StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseDelegate& OnResponseCompleted);
+
+    /**
+     * Check the status of an ongoing account linking process
+     * https://ref.lootlocker.com/game-api/#check-account-link-status
+     *
+     * @param LinkID The ID of the account linking process which was returned when starting the linking process
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkProcessStatusResponse
+     */
+    static void CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseDelegate& OnResponseCompleted);
+
+    /**
+     * Cancel an ongoing account linking process
+     * The response will be empty unless an error occurs
+     * https://ref.lootlocker.com/game-api/#cancel-account-link
+     *
+     * @param LinkID The ID of the account linking process which was returned when starting the linking process
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerCancelAccountLinkingProcessResponse
+     */
+    static void CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseDelegate& OnResponseCompleted);
+
+    /**
+     * Unlink a provider from the currently signed in player
+     * The response will be empty unless an error occurs
+     * https://ref.lootlocker.com/game-api/#unlink-provider
+     *
+     * @param Provider
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerUnlinkProviderFromAccountResponse
+     */
+    static void UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseDelegate& OnResponseCompleted);
+#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
 
     //==================================================
 	//Player calls
@@ -605,12 +733,90 @@ public:
     static void ResetPlayerProgression(const FString& ProgressionKey, const FLootLockerPlayerProgressionWithRewardsResponseDelegate& OnComplete);
 
     /**
-    * Returns multiple progressions the player is currently on.
-    *
-    * @param ProgressionKey Key of the progression you want to delete
-    * @param OnComplete onComplete Action for handling the response of type FLootLockerResponse
+    * Deletes the specified player progression.
+
+    * @param ProgressionKey Key of the progression you want to reset
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerDeleteProgression
     */
     static void DeletePlayerProgression(const FString& ProgressionKey, const FLootLockerDeleteProgressionDelegate& OnComplete);
+
+    //==================================================
+    //Asset Instance Progressions   
+    //==================================================
+
+    /**
+    * Returns multiple progressions the asset instance is currently on.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param Count Amount of entries to receive
+    * @param After Used for pagination, id of the instance progression from which the pagination starts from, use the next_cursor and previous_cursor values
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerResponse
+    */
+    static void GetInstanceProgressions(const int32 AssetInstanceId, const int32 Count, const FString& After, const FLootLockerPaginatedInstanceProgressionsResponseDelegate& OnComplete = FLootLockerPaginatedInstanceProgressionsResponseDelegate());
+    /**
+    * Returns multiple progressions the instance is currently on.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param Count Amount of entries to receive
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerPaginatedInstanceProgressionsResponse
+   */
+    static void GetInstanceProgressions(const int32 AssetInstanceId, const int32& Count, const FLootLockerPaginatedInstanceProgressionsResponseDelegate& OnComplete);
+
+    /**
+    * Returns multiple progressions the instance is currently on.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerPaginatedInstanceProgressionsResponse
+    */
+    static void GetInstanceProgressions(const int32 AssetInstanceId, const FLootLockerPaginatedInstanceProgressionsResponseDelegate& OnComplete);
+    
+    /**
+    * Returns a single progression the instance is currently on.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param ProgressionKey Key of the progression you want to fetch
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerInstanceProgressionResponse
+    */
+    static void GetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionResponseDelegate& OnComplete = FLootLockerInstanceProgressionResponseDelegate());
+ 
+    /**
+    * Adds points to the specified instance progression.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param ProgressionKey Key of the progression you want to add points to
+    * @param Amount Amount of points to be added
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerInstanceProgressionWithRewardsResponse
+    */
+    static void AddPointsToInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseDelegate& OnComplete = FLootLockerInstanceProgressionWithRewardsResponseDelegate());
+  
+    /**
+    * Subtracts points from the specified instance progression.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param ProgressionKey Key of the progression you want to subtract points from
+    * @param Amount Amount of points to be subtracted
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerInstanceProgressionWithRewardsResponse
+    */
+    static void SubtractPointsFromInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseDelegate& OnComplete = FLootLockerInstanceProgressionWithRewardsResponseDelegate());
+  
+    /**
+    * Resets the specified instance progression.
+    *    
+    * @param AssetInstanceId Key of the progression you want
+    * @param ProgressionKey Key of the progression you want to reset
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerInstanceProgressionWithRewardsResponse
+    */
+    static void ResetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionWithRewardsResponseDelegate& OnComplete = FLootLockerInstanceProgressionWithRewardsResponseDelegate());
+  
+    /**
+    * Deletes the specified instance progression.
+    *
+    * @param AssetInstanceId Key of the progression you want
+    * @param ProgressionKey Key of the progression you want to reset
+    * @param OnComplete onComplete Action for handling the response of type FLootLockerDeleteProgression
+    */
+    static void DeleteInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerDeleteProgressionDelegate& OnComplete = FLootLockerDeleteProgressionDelegate());
+
 
 	//==================================================
 	//Heroes
@@ -888,6 +1094,13 @@ public:
      * @param OnCompletedRequest Delegate for handling the server response.
      */
 	static void GetEquipableContextsByCharacterId(int OtherCharacterId, const FContextDelegate& OnCompletedRequest);
+
+    /**
+    * Get list of Characters to a player
+    * https://ref.lootlocker.com/game-api/#list-player-characters
+    */
+    static void ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponse& OnCompletedRequest);
+
 
     //==================================================
     // Character Progressions
@@ -1437,7 +1650,7 @@ public:
      * @param AssetId ID of the asset.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
-    static void ActivateRentalAsset(int AssetId, const FActivateRentalAssetResponseDelegate& OnCompletedRequest);
+    static void ActivateRentalAsset(int AssetInstanceId, const FActivateRentalAssetResponseDelegate& OnCompletedRequest);
 
     /**
      * Get details on an order, like what products it contains as well as the order status.
@@ -1616,6 +1829,10 @@ public:
 	*/
 	static void GetServerTime(const FTimeResponseDelegate& OnCompletedRequest);
 
+    /**
+    * Get the last used platform from an earlier session.
+    */
+    static FString GetLastActivePlatform();
 	//==================================================
 	//Server API
 	//==================================================

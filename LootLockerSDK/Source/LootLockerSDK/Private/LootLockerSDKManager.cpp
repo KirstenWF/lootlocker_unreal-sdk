@@ -54,6 +54,11 @@ void ULootLockerSDKManager::StartGoogleSession(const FString& IdToken, const FLo
     ULootLockerAuthenticationRequestHandler::StartGoogleSession(IdToken, FGoogleSessionResponseBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::StartGoogleSessionForPlatform(const FString& IdToken, ELootLockerGoogleClientPlatform Platform, const FLootLockerGoogleSessionResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerAuthenticationRequestHandler::StartGoogleSession(IdToken, Platform, FGoogleSessionResponseBP(), OnCompletedRequest);
+}
+
 void ULootLockerSDKManager::RefreshGoogleSession(const FString& RefreshToken, const FLootLockerGoogleSessionResponseDelegate& OnCompletedRequest)
 {
     ULootLockerAuthenticationRequestHandler::RefreshGoogleSession(RefreshToken, FGoogleSessionResponseBP(), OnCompletedRequest);
@@ -69,6 +74,16 @@ void ULootLockerSDKManager::RefreshAppleSession(const FString& RefreshToken, con
     ULootLockerAuthenticationRequestHandler::RefreshAppleSession(RefreshToken, FAppleSessionResponseBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseBP& OnStartedAppleGameCenterSessionCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::StartAppleGameCenterSession(BundleId, PlayerId, PublicKeyUrl, Signature, Salt, Timestamp, OnStartedAppleGameCenterSessionCompleted);
+}
+
+void ULootLockerSDKManager::RefreshAppleGameCenterSession(const FString& RefreshToken, const FLootLockerAppleGameCenterSessionResponseDelegate& OnRefreshAppleGameCenterSessionCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::RefreshAppleGameCenterSession(RefreshToken, FLootLockerAppleGameCenterSessionResponseBP(),OnRefreshAppleGameCenterSessionCompleted);
+}
+
 void ULootLockerSDKManager::StartEpicSession(const FString& IdToken, const FLootLockerEpicSessionResponseDelegate& OnCompletedRequest)
 {
     ULootLockerAuthenticationRequestHandler::StartEpicSession(IdToken, FEpicSessionResponseBP(), OnCompletedRequest);
@@ -77,6 +92,16 @@ void ULootLockerSDKManager::StartEpicSession(const FString& IdToken, const FLoot
 void ULootLockerSDKManager::RefreshEpicSession(const FString& RefreshToken, const FLootLockerEpicSessionResponseDelegate& OnCompletedRequest)
 {
     ULootLockerAuthenticationRequestHandler::RefreshEpicSession(RefreshToken, FEpicSessionResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::StartMetaSession(const FString& UserId, const FString& Nonce, const FLootLockerMetaSessionResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerAuthenticationRequestHandler::StartMetaSession(UserId, Nonce, FLootLockerMetaSessionResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::RefreshMetaSession(const FString& RefreshToken, const FLootLockerMetaSessionResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerAuthenticationRequestHandler::RefreshMetaSession(RefreshToken, FLootLockerMetaSessionResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::WhiteLabelStartSession(const FLootLockerSessionResponse &OnCompletedRequest)
@@ -123,6 +148,30 @@ void ULootLockerSDKManager::EndSession(const FLootLockerDefaultAuthenticationRes
 {
 	ULootLockerAuthenticationRequestHandler::EndSession(FAuthDefaultResponseBP(), OnCompleteRequest);
 }
+
+#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
+// Account Linking
+void ULootLockerSDKManager::StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseDelegate& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::StartAccountLinkingProcess(FLootLockerAccountLinkStartResponseBP(), OnResponseCompleted);
+}
+
+void ULootLockerSDKManager::CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseDelegate& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::CheckAccountLinkingProcessStatus(LinkID, FLootLockerAccountLinkProcessStatusResponseBP(), OnResponseCompleted);
+}
+
+void ULootLockerSDKManager::CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseDelegate& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::CancelAccountLinkingProcess(LinkID, FLootLockerCancelAccountLinkingProcessResponseBP(), OnResponseCompleted);
+}
+
+void ULootLockerSDKManager::UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseDelegate& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::UnlinkProviderFromAccount(Provider, FLootLockerUnlinkProviderFromAccountResponseBP(), OnResponseCompleted);
+}
+#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
+
 //Player
 void ULootLockerSDKManager::GetPlayerInfo(const FLootLockerPlayerInformationResponse& OnCompletedRequest)
 {
@@ -425,6 +474,11 @@ void ULootLockerSDKManager::GetEquipableContextsByCharacterId(int OtherCharacter
 	ULootLockerCharacterRequestHandler::GetEquipableContextsByCharacterId(OtherCharacterId, FContextDelegateBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponse& OnCompletedRequest)
+{
+    ULootLockerCharacterRequestHandler::ListPlayerCharacters(FPLootLockerListPlayerCharactersResponseBP(), OnCompletedRequest);
+}
+
 // Character Progressions
 void ULootLockerSDKManager::GetCharacterProgressions(const int32& CharacterId, const int32& Count, const FString& After, const FLootLockerPaginatedCharacterProgressionsResponseDelegate& OnComplete)
 {
@@ -464,6 +518,49 @@ void ULootLockerSDKManager::ResetCharacterProgression(const int32& CharacterId, 
 void ULootLockerSDKManager::DeleteCharacterProgression(const int32& CharacterId, const FString& ProgressionKey, const FLootLockerDeleteProgressionDelegate& OnComplete)
 {
     ULootLockerProgressionsRequestHandler::DeleteCharacterProgression(CharacterId, ProgressionKey, FLootLockerDeleteProgressionBP(), OnComplete);
+}
+
+//Asset Instance Progressions
+
+
+void ULootLockerSDKManager::GetInstanceProgressions(const int32 AssetInstanceId, const int32 Count, const FString& After, const FLootLockerPaginatedInstanceProgressionsResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::GetInstanceProgressions(AssetInstanceId, Count, After, FLootLockerPaginatedInstanceProgressionsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetInstanceProgressions(const int32 AssetInstanceId, const int32& Count, const FLootLockerPaginatedInstanceProgressionsResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::GetInstanceProgressions(AssetInstanceId, Count, "", FLootLockerPaginatedInstanceProgressionsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetInstanceProgressions(const int32 AssetInstanceId, const FLootLockerPaginatedInstanceProgressionsResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::GetInstanceProgressions(AssetInstanceId, 0, "", FLootLockerPaginatedInstanceProgressionsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::GetInstanceProgression(AssetInstanceId, ProgressionKey, FLootLockerInstanceProgressionResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::AddPointsToInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::AddPointsToInstanceProgression(AssetInstanceId, ProgressionKey, Amount, FLootLockerInstanceProgressionWithRewardsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::SubtractPointsFromInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::SubtractPointsFromInstanceProgression(AssetInstanceId, ProgressionKey, Amount, FLootLockerInstanceProgressionWithRewardsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ResetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionWithRewardsResponseDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::ResetInstanceProgression(AssetInstanceId, ProgressionKey, FLootLockerInstanceProgressionWithRewardsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::DeleteInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerDeleteProgressionDelegate& OnComplete)
+{
+    ULootLockerProgressionsRequestHandler::DeleteInstanceProgression(AssetInstanceId, ProgressionKey, FLootLockerDeleteProgressionBP(), OnComplete);
 }
 
 //Persistent Storage
@@ -705,9 +802,9 @@ void ULootLockerSDKManager::PollingOrderStatus(int PurchaseId, const FPurchaseSt
     ULootLockerPurchasesRequestHandler::PollingOrderStatus(PurchaseId, FPurchaseStatusResponseDelegateBP(), OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::ActivateRentalAsset(int AssetId, const FActivateRentalAssetResponseDelegate& OnCompletedRequest)
+void ULootLockerSDKManager::ActivateRentalAsset(int AssetInstanceId, const FActivateRentalAssetResponseDelegate& OnCompletedRequest)
 {
-    ULootLockerPurchasesRequestHandler::ActivateRentalAsset(AssetId, FActivateRentalAssetResponseDelegateBP(), OnCompletedRequest);
+    ULootLockerPurchasesRequestHandler::ActivateRentalAsset(AssetInstanceId, FActivateRentalAssetResponseDelegateBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetOrderDetails(int32 OrderId, const bool NoProducts, const FOrderStatusDetailsDelegate& OnCompletedRequest)
@@ -811,6 +908,9 @@ void ULootLockerSDKManager::GetServerTime(const FTimeResponseDelegate& OnComplet
     ULootLockerMiscellaneousRequestHandler::GetServerTime(FTimeResponseDelegateBP(), OnCompletedRequest);
 }
 
+FString ULootLockerSDKManager::GetLastActivePlatform() {
+    return ULootLockerMiscellaneousRequestHandler::GetLastActivePlatform();
+}
 // Server API
 void ULootLockerSDKManager::Server_StartSession(const FServerAuthResponseDelegate& OnStartedSessionRequestCompleted)
 {

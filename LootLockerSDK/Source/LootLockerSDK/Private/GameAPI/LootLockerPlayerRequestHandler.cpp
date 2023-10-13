@@ -91,11 +91,37 @@ void ULootLockerPlayerRequestHandler::SetProfilePublic(const FResponseCallbackBP
 
 void ULootLockerPlayerRequestHandler::SetPlayerName(FString Name, const FPNameResponseBP& OnCompletedRequestBP, const FPNameResponse& OnCompletedRequest)
 {
+
+	if (ULootLockerCurrentPlatform::Get() == ELootLockerPlatform::Guest)
+	{
+
+		if (Name.Equals(ULootLockerStateData::GetPlayerIdentifier(), ESearchCase::IgnoreCase)) {
+			FLootLockerNameResponse FailResponse;
+			FailResponse.success = false;
+			FailResponse.FullTextFromServer = "Cannot set the Player name to their Identifier";
+			FailResponse.Error = FailResponse.FullTextFromServer;
+
+			OnCompletedRequestBP.ExecuteIfBound(FailResponse);
+			return;
+		}
+		if (Name.Equals("player", ESearchCase::IgnoreCase)) {
+			FLootLockerNameResponse FailResponse;
+			FailResponse.success = false;
+			FailResponse.FullTextFromServer = "Cannot set the Player name to 'Player'";
+			FailResponse.Error = FailResponse.FullTextFromServer;
+
+			OnCompletedRequestBP.ExecuteIfBound(FailResponse);
+			return;
+		}
+
+
+	}
+
 	FLootLockerPlayerNameRequest Data;
-	FString PlayerName;
+
 	Data.name = Name;
 
-	LLAPI<FLootLockerNameResponse>::CallAPI(HttpClient, Data, ULootLockerGameEndpoints::SetPlayerName, {  },EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest);
+	LLAPI<FLootLockerNameResponse>::CallAPI(HttpClient, Data, ULootLockerGameEndpoints::SetPlayerName, {  }, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest);
 }
 
 void ULootLockerPlayerRequestHandler::GetPlayerName(const FPNameResponseBP& OnCompletedRequestBP, const FPNameResponse& OnCompletedRequest)

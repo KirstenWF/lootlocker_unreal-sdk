@@ -7,8 +7,12 @@
 #include "LootLockerStateData.h"
 #include "GameAPI/LootLockerAuthenticationRequestHandler.h"
 #include "Interfaces/IHttpResponse.h"
-#include "Launch/Resources/Version.h"
 #include "Misc/FileHelper.h"
+#include "Misc/Guid.h"
+#include "Utils/LootLockerUtilities.h"
+
+const FString ULootLockerHttpClient::UserAgent = FString::Format(TEXT("X-UnrealEngine-Agent/{0}"), { ENGINE_VERSION_STRING });
+const FString ULootLockerHttpClient::UserInstanceIdentifier = FGuid::NewGuid().ToString();
 
 ULootLockerHttpClient::ULootLockerHttpClient()
 {
@@ -26,7 +30,8 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
 #endif
 	Request->SetURL(endPoint);
 
-	Request->SetHeader(TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent"));
+	Request->SetHeader(TEXT("User-Agent"), UserAgent);
+	Request->SetHeader(TEXT("User-Instance-Identifier"), UserInstanceIdentifier);
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
     Request->SetHeader(TEXT("Accepts"), TEXT("application/json"));
 
@@ -70,7 +75,7 @@ bool ULootLockerHttpClient::ResponseIsValid(const FHttpResponsePtr& InResponse, 
 		UE_LOG(LogLootLockerGameSDK, Warning, TEXT("Http Response returned error code: %d"), InResponse->GetResponseCode());
 		UE_LOG(LogLootLockerGameSDK, Warning, TEXT("Http Response content:\n%s"), *InResponse->GetContentAsString());
         UE_LOG(LogLootLockerGameSDK, Warning, TEXT("Http Request endpoint: %s to %s"), *RequestMethod, *Endpoint);
-        UE_LOG(LogLootLockerGameSDK, Warning, TEXT("Http Request data: %s"), *Data);
+        UE_LOG(LogLootLockerGameSDK, Warning, TEXT("Http Request data: %s"), *LootLockerUtilities::ObfuscateJsonStringForLogging(Data));
 		return false;
 	}
 }
@@ -109,7 +114,8 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
 
     FString Boundary = "lootlockerboundary";
 
-    Request->SetHeader(TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent"));
+	Request->SetHeader(TEXT("User-Agent"), UserAgent);
+	Request->SetHeader(TEXT("User-Instance-Identifier"), UserInstanceIdentifier);
     Request->SetHeader(TEXT("Content-Type"), TEXT("multipart/form-data; boundary=" + Boundary));
 
     for (TTuple<FString, FString> CustomHeader : customHeaders)

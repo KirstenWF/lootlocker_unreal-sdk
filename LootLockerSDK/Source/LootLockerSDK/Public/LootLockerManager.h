@@ -3,29 +3,31 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "GameAPI/LootLockerAuthenticationRequestHandler.h"
-#include "LootLockerHttpClient.h"
-#include "LootLockerConfig.h"
 #include "Engine/DataAsset.h"
-#include "GameAPI/LootLockerPlayerRequestHandler.h"
-#include "GameAPI/LootLockerCharacterRequestHandler.h"
-#include "GameAPI/LootLockerPersistentStorageRequestHandler.h"
-#include "GameAPI/LootLockerAssetsRequestHandler.h"
+#include "GameAPI/LootLockerAccountLinkRequestHandler.h"
 #include "GameAPI/LootLockerAssetInstancesRequestHandler.h"
-#include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
-#include "GameAPI/LootLockerMissionsRequestHandler.h"
-#include "GameAPI/LootLockerMapsRequestHandler.h"
-#include "GameAPI/LootLockerPurchasesRequestHandler.h"
-#include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
+#include "GameAPI/LootLockerAssetsRequestHandler.h"
+#include "GameAPI/LootLockerAuthenticationRequestHandler.h"
+#include "GameAPI/LootLockerCharacterRequestHandler.h"
 #include "GameAPI/LootLockerCollectablesRequestHandler.h"
-#include "GameAPI/LootLockerMessagesRequestHandler.h"
-#include "GameAPI/LootLockerLeaderboardRequestHandler.h"
 #include "GameAPI/LootLockerDropTablesRequestHandler.h"
 #include "GameAPI/LootLockerHeroRequestHandler.h"
+#include "GameAPI/LootLockerLeaderboardRequestHandler.h"
+#include "GameAPI/LootLockerMapsRequestHandler.h"
+#include "GameAPI/LootLockerMessagesRequestHandler.h"
 #include "GameAPI/LootLockerMiscellaneousRequestHandler.h"
+#include "GameAPI/LootLockerMissionsRequestHandler.h"
+#include "GameAPI/LootLockerPersistentStorageRequestHandler.h"
 #include "GameAPI/LootLockerPlayerFilesRequestHandler.h"
+#include "GameAPI/LootLockerPlayerRequestHandler.h"
 #include "GameAPI/LootLockerProgressionsRequestHandler.h"
+#include "GameAPI/LootLockerPurchasesRequestHandler.h"
+#include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
+#include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
+#include "LootLockerConfig.h"
+#include "LootLockerHttpClient.h"
+#include "LootLockerPlatformManager.h"
+#include "UObject/NoExportTypes.h"
 
 #include "ServerAPI/LootLockerServerAuthenticationRequestHandler.h"
 #include "ServerAPI/LootLockerServerPersistentStorageRequestHandler.h"
@@ -143,8 +145,37 @@ public:
     static void RefreshAppleSession(const FString& RefreshToken, const FAppleSessionResponseBP& OnRefreshAppleSessionCompleted);
 
     /**
+    * Create a new session for Sign in with Apple Game Center
+    * The Apple sign in platform must be enabled in the web console for this to work.
+    * https://ref.lootlocker.com/game-api/#sign-in-with-apple-game-center
+    *
+    * @param BundleId the Apple Game Center bundle id of your app
+    * @param PlayerId the user's player id in Apple Game Center
+    * @param PublicKeyUrl The url of the public key generated from Apple Game Center Identity Verification
+    * @param Signature the signature generated from Apple Game Center Identity Verification
+    * @param Salt the salt of the signature generated from Apple Game Center Identity Verification
+    * @param Timestamp the timestamp of the verification generated from Apple Game Center Identity Verification
+    * @param OnStartedAppleGameCenterSessionCompleted Delegate for handling the response of type  for handling the response of type FLootLockerAppleGameCenterSessionResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
+    static void StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseBP& OnStartedAppleGameCenterSessionCompleted);
+
+    /**
+     * Refresh a previous session signed in with Apple Game Center
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+     * The Apple sign in platform must be enabled in the web console for this to work.
+     * https://ref.lootlocker.com/game-api/#sign-in-with-apple-game-center
+     *
+     * @param RefreshToken (Optional) Token received in response from StartAppleSession request. If not supplied we will attempt to resolve it from stored player data.
+     * @param OnRefreshAppleGameCenterSessionCompleted Delegate for handling the response of type FLootLockerAppleGameCenterResponse
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = (AdvancedDisplay = "RefreshToken"))
+    static void RefreshAppleGameCenterSession(const FString& RefreshToken, const FLootLockerAppleGameCenterSessionResponseBP& OnRefreshAppleGameCenterSessionCompleted);
+
+    /**
      * Start a session for a Google user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * The Google sign in platform must be enabled in the web console for this to work.
      * https://ref.lootlocker.io/game-api/#sign-in-with-google
      *
      * @param IdToken The device id of the player
@@ -152,6 +183,19 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
     static void StartGoogleSession(const FString& IdToken, const FGoogleSessionResponseBP& OnStartedGoogleSessionRequestCompleted);
+
+    /**
+     * Start a session for a Google user
+     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * The desired Google sign in platform must be enabled in the web console for this to work.
+     * https://ref.lootlocker.io/game-api/#sign-in-with-google
+     *
+     * @param IdToken The device id of the player
+     * @param Platform Google OAuth2 ClientID platform
+     * @param OnStartedGoogleSessionRequestCompleted Delegate for handling the server response.
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
+    static void StartGoogleSessionForPlatform(const FString& IdToken, ELootLockerGoogleClientPlatform Platform, const FGoogleSessionResponseBP& OnStartedGoogleSessionRequestCompleted);
 
     /**
      * Refresh a previous session signed in with Google
@@ -188,6 +232,29 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = (AdvancedDisplay = "RefreshToken"))
     static void RefreshEpicSession(const FString& RefreshToken, const FEpicSessionResponseBP& OnRefreshEpicSessionCompleted);
+
+    /**
+     * Start a session for an Meta / Oculus user
+     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * The Meta platform must be enabled in the web console for this to work.
+     *
+     * @param UserId The id recieved from Oculus
+     * @param Nonce The nonce recieved from Oculus
+     * @param OnMetaSessionRequestCompleted Delegate for handling the server response.
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
+    static void StartMetaSession(const FString& UserId, const FString& Nonce, const FLootLockerMetaSessionResponseBP& OnMetaSessionRequestCompleted);
+
+    /**
+     * Refresh a previous session signed in with Meta
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+     * The Meta platform must be enabled in the web console for this to work.
+     *
+     * @param RefreshToken (Optional) Token received in response from StartMetaSession request. If not supplied we will attempt to resolve it from stored player data.
+     * @param OnRefreshEpicSessionCompleted Delegate for handling the response
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = (AdvancedDisplay = "RefreshToken"))
+    static void RefreshMetaSession(const FString& RefreshToken, const FLootLockerMetaSessionResponseBP& OnRefreshMetaSessionCompleted);
 
     /**
      * Create a new user using the White Label login system.
@@ -320,7 +387,61 @@ public:
      * @param OnEndSessionRequestCompleted Delegate for handling the response of type LootLockerSessionResponse
      */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
-    static void EndSession(const  FAuthDefaultResponseBP& OnEndSessionRequestCompleted);
+    static void EndSession(const FAuthDefaultResponseBP& OnEndSessionRequestCompleted);
+
+#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
+    //==================================================
+	// Account Linking https://ref.lootlocker.com/game-api/#universal-auth
+    //==================================================
+
+    /**
+     * Start an account linking process on behalf of the currently signed in player
+     * When you want to link an additional provider to a player, you start by initiating an account link. The player can then navigate to the online link flow using the code_page_url and code, or the qr_code and continue the linking process.
+     * For the duration of the linking process you can check the status using the CheckAccountLinkingProcessStatus method.
+     * Returned from this method is the ID of the linking process, make sure to save that so that you can check the status of the process later.
+     * https://ref.lootlocker.com/game-api/#start-account-link
+     *
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkStartResponse
+     */
+    //TODO: Uncomment UFUNCTION
+    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
+    static void StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseBP& OnResponseCompleted);
+
+    /**
+     * Check the status of an ongoing account linking process
+     * https://ref.lootlocker.com/game-api/#check-account-link-status
+     *
+     * @param LinkID The ID of the account linking process which was returned when starting the linking process
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkProcessStatusResponse
+     */
+    //TODO: Uncomment UFUNCTION
+    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
+    static void CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseBP& OnResponseCompleted);
+
+    /**
+     * Cancel an ongoing account linking process
+     * The response will be empty unless an error occurs
+     * https://ref.lootlocker.com/game-api/#cancel-account-link
+     *
+     * @param LinkID The ID of the account linking process which was returned when starting the linking process
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerCancelAccountLinkingProcessResponse
+     */
+    //TODO: Uncomment UFUNCTION
+    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
+    static void CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseBP& OnResponseCompleted);
+
+    /**
+     * Unlink a provider from the currently signed in player
+     * The response will be empty unless an error occurs
+     * https://ref.lootlocker.com/game-api/#unlink-provider
+     *
+     * @param Provider What provider to unlink from the currently logged in player
+     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerUnlinkProviderFromAccountResponse
+     */
+    //TODO: Uncomment UFUNCTION
+    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
+    static void UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseBP& OnResponseCompleted);
+#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
 
     //==================================================
     //Players
@@ -840,6 +961,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Characters")
     static void ListCharacterTypes(const FPLootLockerListCharacterTypesResponseBP& OnCompletedRequestBP);
 
+
+    /**
+    * Get list of Characters to a player
+    * https://ref.lootlocker.com/game-api/#list-player-characters
+    * @param OnCompletedRequestBP Delegate for handling the server response.
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Characters")
+    static void ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponseBP& OnCompletedRequestBP);
     /**
      * Equip an asset to the default character.
      * https://ref.lootlocker.io/game-api/#equip-asset-to-default-character
@@ -992,7 +1121,7 @@ public:
     static void ResetCharacterProgression(const int32& CharacterId, const FString& ProgressionKey, const FLootLockerCharacterProgressionWithRewardsResponseBP& OnCompletedRequest);
 
     /**
-    * Returns multiple progressions the character is currently on.
+    * deletes the specified character progression.
     *
     * @param CharacterId Id of the character you want to fetch progressions for
     * @param ProgressionKey Key of the progression you want to delete
@@ -1366,6 +1495,73 @@ public:
     static void GetProgressionTiers(const FString& ProgressionKey, const int32 Count, const int32 After, const FLootLockerPaginatedProgressionTiersResponseBP& OnCompletedRequest);
 
     //==================================================
+    //Instance Progressions
+    //==================================================
+
+    /**
+    * Returns multiple progressions the asset instance is currently on.
+    *
+    * @param AssetInstanceId Id of the instance you want to fetch progressions for
+    * @param Count Optional: Amount of entries to receive
+    * @param After Optional: Used for pagination, id of the instance progression from which the pagination starts from, use the next_cursor and previous_cursor values
+    * @param OnCompletedRequest Action for handling the response of type FLootLockerPaginatedInstanceProgressionsResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Instance Progressions", meta = (AdvancedDisplay = "Count,After", Count = -1, After = ""))
+    static void GetInstanceProgressions(const int32 AssetInstanceId, const int32 Count, const FString& After, const FLootLockerPaginatedInstanceProgressionsResponseBP& OnCompletedRequestBP);
+   
+    /**
+    * Returns a single progression the instance is currently on.
+    *
+    * @param AssetInstanceId Id of the instance you want to fetch progressions for
+    * @param ProgressionKey Key of the progression you want to fetch
+    * @param OnCompletedRequest Action for handling the response of type FLootLockerInstanceProgressionsResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Instance Progressions")
+    static void GetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionResponseBP& OnCompletedRequestBP);
+   
+    /**
+    * Adds points to the specified instance progression.
+    *
+    * @param AssetInstanceId Id of the instance you want to fetch progressions for
+    * @param ProgressionKey Key of the progression you want to add points to
+    * @param Amount Amount of points to be added
+    * @param OnCompletedRequest Action for handling the response of type FLootLockerinstanceProgressionWithRewardsResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Instance Progressions")
+    static void AddPointsToInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseBP& OnCompletedRequestBP);
+   
+    /**
+    * Subtracts points from the specified instance progression.
+    *
+    * @param AssetInstanceId Id of the instance you want to fetch progressions for
+    * @param ProgressionKey Key of the progression you want to subtract points from
+    * @param Amount Amount of points to be subtracted
+    * @param OnCompletedRequest Action for handling the response of type FLootLockerInstanceProgressionWithRewardsResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Instance Progressions")
+    static void SubtractPointsFromInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseBP& OnCompletedRequestBP);
+   
+    /**
+    * Resets the specified instance progression.
+    *
+    * @param AssetInstanceId Id of the instance you want to fetch progressions for
+    * @param ProgressionKey Key of the progression you want to reset
+    * @param OnCompletedRequest Action for handling the response of type FLootLockerInstanceProgressionWithRewardsResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Instance Progressions")
+    static void ResetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionWithRewardsResponseBP& OnCompletedRequestBP);
+   
+    /**
+    * Deletes the specified instance progression.
+    *
+    * @param AssetInstanceId Id of the instance you want to fetch progressions for
+    * @param ProgressionKey Key of the progression you want to delete
+    * @param OnCompletedRequest Action for handling the response of type FLootLockerResponse
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Instance Progressions")
+    static void DeleteInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerDeleteProgressionBP& OnCompletedRequestBP);
+
+    //==================================================
     //Missions
     //==================================================
 
@@ -1476,11 +1672,11 @@ public:
      * Once you have purchased a rental asset, you need to activate the rental for it to become available for the player.
      * https://ref.lootlocker.io/game-api/#activating-a-rental-asset
      *
-     * @param AssetId ID of the asset.
+     * @param AssetInstanceId ID of the asset.
      * @param OnActivateRentalAssetCompleted Delegate for handling the server response.
      */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Purchases")
-    static void ActivateRentalAsset(int AssetId, const FActivateRentalAssetResponseDelegateBP& OnActivateRentalAssetCompleted);
+    static void ActivateRentalAsset(int AssetInstanceId, const FActivateRentalAssetResponseDelegateBP& OnActivateRentalAssetCompleted);
 
     /**
      * Get details on an order, like what products it contains as well as the order status.
@@ -1674,6 +1870,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Miscellaneous")
     static void GetServerTime(const FTimeResponseDelegateBP& OnCompletedRequestBP);
 
+    /**
+    * Get the last used platform from a prior session.
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Miscellaneous")
+    static FString GetLastActivePlatform();
+};
 	//==================================================
 	//Server API
 	//==================================================

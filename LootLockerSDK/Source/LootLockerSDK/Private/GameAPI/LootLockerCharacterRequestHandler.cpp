@@ -29,7 +29,7 @@ void ULootLockerCharacterRequestHandler::UpdateCharacter(int CharacterId, bool I
 
 void ULootLockerCharacterRequestHandler::CreateCharacter(bool IsDefault,  FString CharacterName,  FString CharacterId, const FPCharacterLoadoutResponseBP& OnCompletedRequestBP, const FCharacterLoadoutResponse& OnCompletedRequest)
 {
-	FLootLockerListCharacterRequest characterRequest;
+	FLootLockerCreateCharacterRequest characterRequest;
 	characterRequest.is_default = IsDefault;
 	characterRequest.name = CharacterName;
 	characterRequest.character_type_id = CharacterId;
@@ -92,4 +92,8 @@ void ULootLockerCharacterRequestHandler::GetEquipableContextsToDefaultCharacter(
 void ULootLockerCharacterRequestHandler::GetEquipableContextsByCharacterId(int OtherCharacterId, const FContextDelegateBP& OnCompletedRequestBP, const FContextDelegate& OnCompletedRequest)
 {
 	LLAPI<FLootLockerGetContextResponse>::CallAPI(HttpClient, LootLockerEmptyRequest, ULootLockerGameEndpoints::GetEquippableContextsByCharacterIDEndpoint, { OtherCharacterId },EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest);
+}
+
+void ULootLockerCharacterRequestHandler::ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponseBP& OnCompletedRequestBP, const FPLootLockerListPlayerCharactersResponse& OnCompletedRequest) {
+	LLAPI<FLootLockerListPlayerCharactersResponse>::CallAPI(HttpClient, LootLockerEmptyRequest, ULootLockerGameEndpoints::ListPlayerCharactersEndpoint, {}, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest);
 }

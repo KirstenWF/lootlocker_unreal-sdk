@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Launch/Resources/Version.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "LootLockerStateData.generated.h"
 
 
@@ -19,6 +19,7 @@ class LOOTLOCKERSDK_API ULootLockerStateData : public UObject
 	static FString PlayerIdentifier;
 	static FString WhiteLabelEmail;
 	static FString WhiteLabelToken;
+	static FString LastActivePlatform;
 
 #if ENGINE_MAJOR_VERSION < 5
 	static const FString SaveSlot;
@@ -39,6 +40,7 @@ public:
 	static FString GetPlayerIdentifier();
 	static FString GetWhiteLabelEmail();
 	static FString GetWhiteLabelToken();
+	static FString GetLastActivePlatform();
 	static void SetToken(FString InToken);
 	static void SetServerToken(FString InServerToken);
 	static void SetSteamToken(FString InSteamToken);
@@ -46,5 +48,6 @@ public:
 	static void SetPlayerIdentifier(FString InPlayerIdentifier);
 	static void SetWhiteLabelEmail(FString InWhiteLabelEmail);
 	static void SetWhiteLabelToken(FString InWhiteLabelToken);
+	static void SetLastActivePlatform(FString InLastActivePlatform);
     static void ClearState();
 };

@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "LootLockerConfig.h"
+#include "LootLockerStateData.h"
 #include "LootLockerPlatformManager.generated.h"
 
 UENUM(BlueprintType)
@@ -23,7 +24,9 @@ enum class ELootLockerPlatform : uint8
 	Android = 9				UMETA(DisplayName = "Android"),
 	Google = 10				UMETA(DisplayName = "Google"),
 	Epic = 11				UMETA(DisplayName = "Epic Games / Epic Online Services (EOS)"),
-	LastValue = 12			UMETA(DisplayName = "N/A")
+	AppleGameCenter = 12	UMETA(DisplayName = "Apple Game Center"),
+	Meta = 13				UMETA(DisplayName = "Apple Game Center"),
+	LastValue = 14			UMETA(DisplayName = "N/A")
 };
 
 
@@ -37,11 +40,14 @@ struct FLootLockerPlatformRepresentation
     FString PlatformString;
 	UPROPERTY(BlueprintReadOnly, Category = "LootLocker")
     FString FriendlyPlatformString;
+	UPROPERTY(BlueprintReadOnly, Category = "LootLocker")
+    FString AuthenticationProviderString;
 
-    FLootLockerPlatformRepresentation(const ELootLockerPlatform& Platform = ELootLockerPlatform::None, const FString& PlatformString = TEXT(""))
+    FLootLockerPlatformRepresentation(const ELootLockerPlatform& Platform = ELootLockerPlatform::None, const FString& PlatformString = TEXT(""), const FString& AuthenticationProviderString = TEXT(""))
 	    : Platform(Platform),
 	    PlatformString(PlatformString),
-	    FriendlyPlatformString(GetFriendlyStringFromEnum(Platform))
+	    FriendlyPlatformString(GetFriendlyStringFromEnum(Platform)),
+		AuthenticationProviderString(AuthenticationProviderString)
 	{
 	}
 private:
@@ -60,13 +66,18 @@ public:
 	static const ELootLockerPlatform& Get() { return CurrentPlatform.Platform; }
 	static const FString& GetString() { return CurrentPlatform.PlatformString; }
 	static const FString& GetFriendlyString() { return CurrentPlatform.FriendlyPlatformString; }
+	static const FString& GetAuthenticationProviderString() { return CurrentPlatform.FriendlyPlatformString; }
 	UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Miscellaneous")
 	static const FLootLockerPlatformRepresentation& GetPlatformRepresentation() { return CurrentPlatform; }
 	UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Miscellaneous")
     static const FLootLockerPlatformRepresentation& GetPlatformRepresentationForPlatform(const ELootLockerPlatform Platform) { return *PlatformRepresentations.Find(Platform); }
 
 	static void Reset() { CurrentPlatform = *PlatformRepresentations.Find(ELootLockerPlatform::None); }
-	static void Set(const ELootLockerPlatform& Platform) { CurrentPlatform = *PlatformRepresentations.Find(Platform); }
+	static void Set(const ELootLockerPlatform& Platform)
+	{
+		CurrentPlatform = *PlatformRepresentations.Find(Platform);
+		ULootLockerStateData::SetLastActivePlatform(CurrentPlatform.PlatformString);
+	}
 	static void Set(const ELootLockerPlatformType& LegacyPlatform);
 
 	virtual void PostInitProperties() override

@@ -49,9 +49,24 @@ void ULootLockerManager::RefreshAppleSession(const FString& RefreshToken, const 
     ULootLockerAuthenticationRequestHandler::RefreshAppleSession(RefreshToken, OnRefreshAppleSessionCompleted);
 }
 
+void ULootLockerManager::StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseBP& OnStartedAppleGameCenterSessionCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::StartAppleGameCenterSession(BundleId, PlayerId, PublicKeyUrl, Signature, Salt, Timestamp, OnStartedAppleGameCenterSessionCompleted);
+}
+
+void ULootLockerManager::RefreshAppleGameCenterSession(const FString& RefreshToken, const FLootLockerAppleGameCenterSessionResponseBP& OnRefreshAppleGameCenterSessionCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::RefreshAppleGameCenterSession(RefreshToken, OnRefreshAppleGameCenterSessionCompleted);
+}
+
 void ULootLockerManager::StartGoogleSession(const FString& IdToken, const FGoogleSessionResponseBP& OnStartedGoogleSessionRequestCompleted)
 {
     ULootLockerAuthenticationRequestHandler::StartGoogleSession(IdToken, OnStartedGoogleSessionRequestCompleted);
+}
+
+void ULootLockerManager::StartGoogleSessionForPlatform(const FString& IdToken, ELootLockerGoogleClientPlatform Platform, const FGoogleSessionResponseBP& OnStartedGoogleSessionRequestCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::StartGoogleSession(IdToken, Platform, OnStartedGoogleSessionRequestCompleted);
 }
 
 void ULootLockerManager::RefreshGoogleSession(const FString& RefreshToken, const FGoogleSessionResponseBP& OnRefreshGoogleSessionCompleted)
@@ -67,6 +82,16 @@ void ULootLockerManager::StartEpicSession(const FString& IdToken, const FEpicSes
 void ULootLockerManager::RefreshEpicSession(const FString& RefreshToken, const FEpicSessionResponseBP& OnRefreshEpicSessionCompleted)
 {
     ULootLockerAuthenticationRequestHandler::RefreshEpicSession(RefreshToken, OnRefreshEpicSessionCompleted);
+}
+
+void ULootLockerManager::StartMetaSession(const FString& UserId, const FString& Nonce, const FLootLockerMetaSessionResponseBP& OnMetaSessionRequestCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::StartMetaSession(UserId, Nonce, OnMetaSessionRequestCompleted);
+}
+
+void ULootLockerManager::RefreshMetaSession(const FString& RefreshToken, const FLootLockerMetaSessionResponseBP& OnMetaSessionRequestCompleted)
+{
+    ULootLockerAuthenticationRequestHandler::RefreshMetaSession(RefreshToken, OnMetaSessionRequestCompleted);
 }
 
 void ULootLockerManager::WhiteLabelStartSession(const FAuthResponseBP &OnStartWhiteLabelSessionRequestCompleted)
@@ -99,7 +124,6 @@ void ULootLockerManager::WhiteLabelResetPassword(const FString &Email, const FLo
     ULootLockerAuthenticationRequestHandler::WhiteLabelRequestPasswordReset(Email, OnResetWhiteLabelPasswordRequestCompleted);
 }
 
-
 void ULootLockerManager::WhiteLabelLogin(const FString& Email, const FString& Password, const FLootLockerLoginResponseDelegateBP& OnWhiteLabelLoginRequestCompleted, const bool Remember /* = false */)
 {
     ULootLockerAuthenticationRequestHandler::WhiteLabelLogin(Email, Password, Remember, OnWhiteLabelLoginRequestCompleted);
@@ -124,6 +148,29 @@ void ULootLockerManager::EndSession(const  FAuthDefaultResponseBP& OnEndSessionR
 {
     ULootLockerAuthenticationRequestHandler::EndSession(OnEndSessionRequestCompleted);
 }
+
+#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
+// Account Linking
+void ULootLockerManager::StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseBP& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::StartAccountLinkingProcess(OnResponseCompleted);
+}
+
+void ULootLockerManager::CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseBP& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::CheckAccountLinkingProcessStatus(LinkID, OnResponseCompleted);
+}
+
+void ULootLockerManager::CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseBP& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::CancelAccountLinkingProcess(LinkID, OnResponseCompleted);
+}
+
+void ULootLockerManager::UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseBP& OnResponseCompleted) 
+{
+    ULootLockerAccountLinkRequestHandler::UnlinkProviderFromAccount(Provider, OnResponseCompleted);
+}
+#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
 
 void ULootLockerManager::GetPlayerInfo(const FPInfoResponseBP& OnGetPlayerInfoRequestComplete)
 {
@@ -378,6 +425,11 @@ void ULootLockerManager::ListCharacterTypes(const FPLootLockerListCharacterTypes
     ULootLockerCharacterRequestHandler::ListCharacterTypes(OnCompletedRequestBP);
 }
 
+void ULootLockerManager::ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponseBP& OnCompletedRequestBP)
+{
+    ULootLockerCharacterRequestHandler::ListPlayerCharacters(OnCompletedRequestBP);
+}
+
 void ULootLockerManager::EquipAssetToDefaultCharacter(int InstanceId, const FPCharacterDefaultResponseBP& OnEquipAssetToDefaultCharacterRequestCompleted)
 {
     ULootLockerCharacterRequestHandler::EquipAssetToDefaultCharacter(InstanceId, OnEquipAssetToDefaultCharacterRequestCompleted);
@@ -625,6 +677,38 @@ void ULootLockerManager::GetProgressionTiers(const FString& ProgressionKey, cons
     ULootLockerProgressionsRequestHandler::GetProgressionTiers(ProgressionKey, Count, After, OnCompletedRequest);
 }
 
+//Instance progression
+
+void ULootLockerManager::GetInstanceProgressions(const int32 AssetInstanceId, const int32 Count, const FString& After, const FLootLockerPaginatedInstanceProgressionsResponseBP& OnCompletedRequest)
+{
+    ULootLockerProgressionsRequestHandler::GetInstanceProgressions(AssetInstanceId, Count, After, OnCompletedRequest);
+}
+
+void ULootLockerManager::GetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionResponseBP& OnCompletedRequest)
+{
+    ULootLockerProgressionsRequestHandler::GetInstanceProgression(AssetInstanceId, ProgressionKey, OnCompletedRequest);
+}
+
+void ULootLockerManager::AddPointsToInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseBP& OnCompletedRequest)
+{
+    ULootLockerProgressionsRequestHandler::AddPointsToInstanceProgression(AssetInstanceId, ProgressionKey, Amount, OnCompletedRequest);
+}
+
+void ULootLockerManager::SubtractPointsFromInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const int32 Amount, const FLootLockerInstanceProgressionWithRewardsResponseBP& OnCompletedRequest)
+{
+    ULootLockerProgressionsRequestHandler::SubtractPointsFromInstanceProgression(AssetInstanceId, ProgressionKey, Amount, OnCompletedRequest);
+}
+
+void ULootLockerManager::ResetInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerInstanceProgressionWithRewardsResponseBP& OnCompletedRequest)
+{
+    ULootLockerProgressionsRequestHandler::ResetInstanceProgression(AssetInstanceId, ProgressionKey, OnCompletedRequest);
+}
+
+void ULootLockerManager::DeleteInstanceProgression(const int32 AssetInstanceId, const FString& ProgressionKey, const FLootLockerDeleteProgressionBP& OnCompletedRequest)
+{
+    ULootLockerProgressionsRequestHandler::DeleteInstanceProgression(AssetInstanceId, ProgressionKey, OnCompletedRequest);
+}
+
 // Missions
 void ULootLockerManager::GetAllMissions(const FMissionsResponseDelegateBP& OnGetAllMissionsCompleted)
 {
@@ -671,9 +755,9 @@ void ULootLockerManager::PollingOrderStatus(int PurchaseId, const FPurchaseStatu
     ULootLockerPurchasesRequestHandler::PollingOrderStatus(PurchaseId, OnPollingStatusCompleted);
 }
 
-void ULootLockerManager::ActivateRentalAsset(int AssetId, const FActivateRentalAssetResponseDelegateBP& OnActivateRentalAssetCompleted)
+void ULootLockerManager::ActivateRentalAsset(int AssetInstanceId, const FActivateRentalAssetResponseDelegateBP& OnActivateRentalAssetCompleted)
 {
-    ULootLockerPurchasesRequestHandler::ActivateRentalAsset(AssetId, OnActivateRentalAssetCompleted);
+    ULootLockerPurchasesRequestHandler::ActivateRentalAsset(AssetInstanceId, OnActivateRentalAssetCompleted);
 }
 
 void ULootLockerManager::GetOrderDetails(int32 OrderId, const bool NoProducts, const FOrderStatusDetailsBP &OnCompleteBP)
@@ -774,6 +858,9 @@ void ULootLockerManager::GetServerTime(const FTimeResponseDelegateBP& OnComplete
     ULootLockerMiscellaneousRequestHandler::GetServerTime(OnCompletedRequestBP);
 }
 
+FString ULootLockerManager::GetLastActivePlatform() {
+    return ULootLockerMiscellaneousRequestHandler::GetLastActivePlatform();
+}
 // Server API
 void ULootLockerManager::Server_StartSession(const FServerAuthResponseDelegateBP& OnStartedSessionRequestCompleted)
 {
