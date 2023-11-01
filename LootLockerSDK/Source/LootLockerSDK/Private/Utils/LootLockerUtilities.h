@@ -43,16 +43,61 @@ namespace LootLockerUtilities
 
     TArray<TSharedPtr<FJsonValue>> SerializeMissionCheckpoints(const TArray<FLootLockerMissionCheckpoint>& Checkpoints);
 
-    static FString FStringFromJsonObject(const TSharedPtr<FJsonObject> JsonObject);
+    static FString FStringFromJsonObject(const TSharedPtr<FJsonObject> JsonObject)
+    {
+        FString OutJsonString;
+        TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&OutJsonString);
+
+        FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter, true);
+
+        return OutJsonString;
+    }
 
     TSharedPtr<FJsonObject> JsonObjectFromFString(const FString& JsonString);
 
-    static FString ObfuscateJsonStringForLogging(const FString& JsonBody);
+    static FString ObfuscateString(const FObfuscationDetails& ObfuscationDetail, const FString& StringToObfuscate)
+    {
+        if (!ObfuscationDetail.hideCharactersForShortStrings && (StringToObfuscate.Len() <= (ObfuscationDetail.visibleCharsFromBeginning + ObfuscationDetail.visibleCharsFromEnd)))
+        {
+            return StringToObfuscate;
+        }
 
-    static FString ObfuscateJsonStringForLogging(const TArray<FObfuscationDetails>& ObfuscationDetails, const FString& JsonBody);
+        FString ObfuscatedString;
+        int i = 0;
+        for (auto& c : StringToObfuscate) {
+            if (i >= ObfuscationDetail.visibleCharsFromBeginning && i < StringToObfuscate.Len() - ObfuscationDetail.visibleCharsFromEnd) {
+                ObfuscatedString.Append(ObfuscationDetail.replacementChar);
+            }
+            else {
+                ObfuscatedString.AppendChar(c);
+            }
+            ++i;
+        }
+        return ObfuscatedString;
+    }
+	
+    static FString ObfuscateJsonStringForLogging(const TArray<FObfuscationDetails>& ObfuscationDetails, const FString& JsonBody)
+    {
+        TSharedPtr<FJsonObject> jsonObject = JsonObjectFromFString(JsonBody);
+        if (!jsonObject.IsValid())
+        {
+            return JsonBody;
+        }
+        FString valueToObfuscate;
+        for (auto& obfuscationInfo : ObfuscationDetails) {
 
-    static FString ObfuscateString(const FObfuscationDetails& ObfuscationDetail, const FString& StringToObfuscate);
+            if (jsonObject.Get()->TryGetStringField(obfuscationInfo.key, valueToObfuscate))
+            {
+                jsonObject->SetStringField(obfuscationInfo.key, ObfuscateString(obfuscationInfo, valueToObfuscate));
+            }
+        }
+        return FStringFromJsonObject(jsonObject);
+    }
 
+    static FString ObfuscateJsonStringForLogging(const FString& JsonBody)
+    {
+        return ObfuscateJsonStringForLogging(UObfuscationSettings::FieldsToObfuscate, JsonBody);
+    }
 }
 
 template<typename ResponseType>

@@ -1875,7 +1875,7 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Miscellaneous")
     static FString GetLastActivePlatform();
-};
+
 	//==================================================
 	//Server API
 	//==================================================
