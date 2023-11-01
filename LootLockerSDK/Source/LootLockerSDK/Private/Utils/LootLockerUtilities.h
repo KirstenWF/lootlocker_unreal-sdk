@@ -43,56 +43,34 @@ namespace LootLockerUtilities
 
     TArray<TSharedPtr<FJsonValue>> SerializeMissionCheckpoints(const TArray<FLootLockerMissionCheckpoint>& Checkpoints);
 
-    static FString FStringFromJsonObject(const TSharedPtr<FJsonObject> JsonObject)
+    template<typename T>
+    static FString JsonStringWithTopLevelArrayOfObjects(const TArray<T>& ItemArray)
     {
-        FString OutJsonString;
-        TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&OutJsonString);
+        TArray<TSharedPtr<FJsonValue>> ItemsJsonArray;
+        for (auto Item : ItemArray)
+        {
+            TSharedRef<FJsonObject> ItemJson = MakeShareable(new FJsonObject());
+            if (FJsonObjectConverter::UStructToJsonObject(T::StaticStruct(), &Item, ItemJson, 0, 0))
+            {
+                ItemsJsonArray.Push(MakeShareable(new FJsonValueObject(ItemJson)));
+            }
+        }
 
-        FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter, true);
-
-        return OutJsonString;
+        FString JsonString;
+        const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonString);
+        FJsonSerializer::Serialize(ItemsJsonArray, Writer);
+        return JsonString;
     }
+
+    FString FStringFromJsonObject(const TSharedPtr<FJsonObject> JsonObject);
 
     TSharedPtr<FJsonObject> JsonObjectFromFString(const FString& JsonString);
 
-    static FString ObfuscateString(const FObfuscationDetails& ObfuscationDetail, const FString& StringToObfuscate)
-    {
-        if (!ObfuscationDetail.hideCharactersForShortStrings && (StringToObfuscate.Len() <= (ObfuscationDetail.visibleCharsFromBeginning + ObfuscationDetail.visibleCharsFromEnd)))
-        {
-            return StringToObfuscate;
-        }
+    FString ObfuscateJsonStringForLogging(const FString& JsonBody);
 
-        FString ObfuscatedString;
-        int i = 0;
-        for (auto& c : StringToObfuscate) {
-            if (i >= ObfuscationDetail.visibleCharsFromBeginning && i < StringToObfuscate.Len() - ObfuscationDetail.visibleCharsFromEnd) {
-                ObfuscatedString.Append(ObfuscationDetail.replacementChar);
-            }
-            else {
-                ObfuscatedString.AppendChar(c);
-            }
-            ++i;
-        }
-        return ObfuscatedString;
-    }
-	
-    static FString ObfuscateJsonStringForLogging(const TArray<FObfuscationDetails>& ObfuscationDetails, const FString& JsonBody)
-    {
-        TSharedPtr<FJsonObject> jsonObject = JsonObjectFromFString(JsonBody);
-        if (!jsonObject.IsValid())
-        {
-            return JsonBody;
-        }
-        FString valueToObfuscate;
-        for (auto& obfuscationInfo : ObfuscationDetails) {
+    FString ObfuscateJsonStringForLogging(const TArray<FObfuscationDetails>& ObfuscationDetails, const FString& JsonBody);
 
-            if (jsonObject.Get()->TryGetStringField(obfuscationInfo.key, valueToObfuscate))
-            {
-                jsonObject->SetStringField(obfuscationInfo.key, ObfuscateString(obfuscationInfo, valueToObfuscate));
-            }
-        }
-        return FStringFromJsonObject(jsonObject);
-    }
+    FString ObfuscateString(const FObfuscationDetails& ObfuscationDetail, const FString& StringToObfuscate);
 
     static FString ObfuscateJsonStringForLogging(const FString& JsonBody)
     {
@@ -116,20 +94,13 @@ struct LLAPI
             {
                 FJsonObjectConverter::JsonObjectStringToUStruct<ResponseType>(response.FullTextFromServer, &ResponseStruct, 0, 0);
             }
-            if (response.ServerCallStatusCode == 200 || response.ServerCallStatusCode == 204)
-            {
-                ResponseStruct.success = true;
-                if (ResponseStruct.session_token != "")
-                {
-                    ULootLockerStateData::SetToken(ResponseStruct.session_token);
-                }
-            }
-            else
-            {
-                ResponseStruct.success = false;
-                ResponseStruct.Error = response.Error;
-            }
+            ResponseStruct.success = response.success;
+            ResponseStruct.StatusCode = response.StatusCode;
             ResponseStruct.FullTextFromServer = response.FullTextFromServer;
+            if (!ResponseStruct.success)
+            {
+                ResponseStruct.ErrorData = response.ErrorData;
+            }
             ResponseInspectorCallback.ExecuteIfBound(ResponseStruct);
             OnCompletedRequestBP.ExecuteIfBound(ResponseStruct);
             OnCompletedRequest.ExecuteIfBound(ResponseStruct);
@@ -169,12 +140,14 @@ struct LLAPI
                 Delimiter = "&";
             }
         }
+        const FString RequestMethod = ULootLockerConfig::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
 #if WITH_EDITOR
         UE_LOG(LogLootLockerGameSDK, Log, TEXT("Request:"));
-        UE_LOG(LogLootLockerGameSDK, Log, TEXT("ContentString:%s"), *LootLockerUtilities::ObfuscateJsonStringForLogging(ContentString));
-        UE_LOG(LogLootLockerGameSDK, Log, TEXT("EndpointWithArguments:%s"), *EndpointWithArguments);
+        if (!ContentString.IsEmpty() && !IsEmptyJsonString(ContentString)) {
+            UE_LOG(LogLootLockerGameSDK, Log, TEXT("ContentString:%s"), *LootLockerUtilities::ObfuscateJsonStringForLogging(ContentString));
+        }
+        UE_LOG(LogLootLockerGameSDK, Log, TEXT("EndpointWithArguments: %s to %s"), *RequestMethod, *EndpointWithArguments);
 #endif //WITH_EDITOR
-        const FString RequestMethod = ULootLockerConfig::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
 
         // create callback lambda
         const FResponseCallback SessionResponse = CreateLambda<BluePrintDelegate, CppDelegate>(OnCompletedRequestBP, OnCompletedRequest, ResponseInspectorCallback);

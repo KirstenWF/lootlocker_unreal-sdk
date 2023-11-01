@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "LootLockerResponse.h"
 #include "LootLockerHttpClient.h"
-#include "JsonObjectConverter.h"
 #include "LootLockerAuthenticationRequestHandler.generated.h"
 
 /*
@@ -18,6 +17,14 @@ enum class ELootLockerGoogleClientPlatform : uint8
 	Android = 1		UMETA(DisplayName = "Android"),
 	Ios = 2			UMETA(DisplayName = "iOS"),
 	Desktop = 3		UMETA(DisplayName = "Desktop")
+};
+
+USTRUCT()
+struct FLootLockerAuthResponse : public FLootLockerResponse
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString session_token;	
 };
 
 USTRUCT(BlueprintType)
@@ -39,7 +46,7 @@ struct FLootLockerWhiteLabelLoginRequest : public FLootLockerLoginRequest
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerLoginResponse : public FLootLockerResponse
+struct FLootLockerLoginResponse : public FLootLockerAuthResponse
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker Login Response")
@@ -56,16 +63,6 @@ struct FLootLockerLoginResponse : public FLootLockerResponse
 	FString deleted_at;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker Login Response")
 	FString validated_at;
-};
-
-USTRUCT(BlueprintType)
-struct FLootLockerErrorData
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Error")
-	FString message;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Error")
-	FString error;
 };
 
 USTRUCT(BlueprintType)
@@ -89,19 +86,6 @@ struct FLootLockerAuthenticationRequest : public FLootLockerBaseAuthRequest
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerAuthenticationRequestWithDevelopmentMode : public FLootLockerAuthenticationRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerAuthenticationRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FLootLockerWhiteLabelAuthRequest : public FLootLockerBaseAuthRequest
 {
 	GENERATED_BODY()
@@ -109,19 +93,6 @@ struct FLootLockerWhiteLabelAuthRequest : public FLootLockerBaseAuthRequest
 	FString email;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
 	FString token;
-};
-
-USTRUCT(BlueprintType)
-struct FLootLockerWhiteLabelAuthRequestWithDevelopmentMode : public FLootLockerWhiteLabelAuthRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerWhiteLabelAuthRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
 };
 
 USTRUCT(BlueprintType)
@@ -151,19 +122,6 @@ struct FLootLockerNintendoSwitchSessionRequest : public FLootLockerBaseAuthReque
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerNintendoSwitchSessionRequestWithDevelopmentMode : public FLootLockerNintendoSwitchSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerNintendoSwitchSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FLootLockerStartMetaSessionRequest : public FLootLockerBaseAuthRequest
 {
 	GENERATED_BODY()
@@ -188,20 +146,6 @@ struct FLootLockerXboxSessionRequest : public FLootLockerBaseAuthRequest
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
 	FString xbox_user_token;
 };
-
-USTRUCT(BlueprintType)
-struct FLootLockerXboxSessionRequestWithDevelopmentMode : public FLootLockerXboxSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerXboxSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
 
 USTRUCT(BlueprintType)
 struct FLootLockerAppleGameCenterSessionRequest : public FLootLockerBaseAuthRequest
@@ -240,39 +184,11 @@ struct FLootLockerAppleSessionRequest : public FLootLockerBaseAuthRequest
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerAppleSessionRequestWithDevelopmentMode : public FLootLockerAppleSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerAppleSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
-
-
-USTRUCT(BlueprintType)
 struct FLootLockerRefreshAppleSessionRequest : public FLootLockerBaseAuthRequest
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
 	FString refresh_token;
-};
-
-USTRUCT(BlueprintType)
-struct FLootLockerRefreshAppleSessionRequestWithDevelopmentMode : public FLootLockerRefreshAppleSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerRefreshAppleSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
 };
 
 USTRUCT(BlueprintType)
@@ -284,37 +200,11 @@ struct FLootLockerGoogleSessionRequest : public FLootLockerBaseAuthRequest
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerGoogleSessionRequestWithDevelopmentMode : public FLootLockerGoogleSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerGoogleSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FLootLockerGoogleSessionRequestWithPlatform : public FLootLockerGoogleSessionRequest
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
-	ELootLockerGoogleClientPlatform platform;
-};
-
-USTRUCT(BlueprintType)
-struct FLootLockerGoogleSessionRequestWithPlatformAndDevelopmentMode : public FLootLockerGoogleSessionRequestWithPlatform // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
-	bool development_mode;
-
-	FLootLockerGoogleSessionRequestWithPlatformAndDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
+	ELootLockerGoogleClientPlatform platform = ELootLockerGoogleClientPlatform::Android;
 };
 
 USTRUCT(BlueprintType)
@@ -326,19 +216,6 @@ struct FLootLockerRefreshGoogleSessionRequest : public FLootLockerBaseAuthReques
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerRefreshGoogleSessionRequestWithDevelopmentMode : public FLootLockerRefreshGoogleSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerRefreshGoogleSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FLootLockerEpicSessionRequest : public FLootLockerBaseAuthRequest
 {
 	GENERATED_BODY()
@@ -347,37 +224,11 @@ struct FLootLockerEpicSessionRequest : public FLootLockerBaseAuthRequest
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerEpicSessionRequestWithDevelopmentMode : public FLootLockerEpicSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-	bool development_mode;
-
-	FLootLockerEpicSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FLootLockerRefreshEpicSessionRequest : public FLootLockerBaseAuthRequest
 {
 	GENERATED_BODY()
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
 		FString refresh_token;
-};
-
-USTRUCT(BlueprintType)
-struct FLootLockerRefreshEpicSessionRequestWithDevelopmentMode : public FLootLockerRefreshEpicSessionRequest // TODO: Deprecated functionality, remove in v2.1
-{
-	GENERATED_BODY()
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Startup Item")
-		bool development_mode;
-
-	FLootLockerRefreshEpicSessionRequestWithDevelopmentMode(bool developmentMode = false)
-	{
-		development_mode = developmentMode;
-	}
 };
 
 USTRUCT(BlueprintType)
@@ -424,11 +275,15 @@ struct FLootLockerLevelThresholds
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerAuthenticationResponse : public FLootLockerResponse
+struct FLootLockerAuthenticationResponse : public FLootLockerAuthResponse
 {
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
 	int32 player_id = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString public_uid;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+	FString player_ulid;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
 	bool seen_before = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
@@ -492,16 +347,8 @@ struct FLootLockerWhiteLabelVerifySessionResponse : public FLootLockerResponse
 	FString email;
 };
 
-
-
 USTRUCT(BlueprintType)
-struct FLootLockerAuthenticationDefaultResponse : public FLootLockerResponse
-{
-	GENERATED_BODY()
-};
-
-USTRUCT(BlueprintType)
-struct FLootLockerWhiteLabelLoginAndSessionResponse : public FLootLockerResponse
+struct FLootLockerWhiteLabelLoginAndSessionResponse : public FLootLockerAuthResponse
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
@@ -511,25 +358,25 @@ struct FLootLockerWhiteLabelLoginAndSessionResponse : public FLootLockerResponse
 
 	FLootLockerWhiteLabelLoginAndSessionResponse() = default;
 
-	FLootLockerWhiteLabelLoginAndSessionResponse(FLootLockerLoginResponse LoginResponse)
+	FLootLockerWhiteLabelLoginAndSessionResponse(const FLootLockerLoginResponse& LoginResponse)
 	{
 		this->success = LoginResponse.success;
-		this->ServerCallStatusCode = LoginResponse.ServerCallStatusCode;
+		this->StatusCode = LoginResponse.StatusCode;
 		this->session_token = LoginResponse.session_token;
 		this->FullTextFromServer = LoginResponse.FullTextFromServer;
-		this->Error = LoginResponse.Error;
 		this->LoginResponse = LoginResponse;
+		this->ErrorData = ErrorData;
 	}
 
-	FLootLockerWhiteLabelLoginAndSessionResponse(FLootLockerLoginResponse LoginResponse, FLootLockerAuthenticationResponse SessionResponse)
+	FLootLockerWhiteLabelLoginAndSessionResponse(const FLootLockerLoginResponse& LoginResponse, const FLootLockerAuthenticationResponse& SessionResponse)
 	{
 		this->success = SessionResponse.success;
-		this->ServerCallStatusCode = SessionResponse.ServerCallStatusCode;
+		this->StatusCode = SessionResponse.StatusCode;
 		this->session_token = SessionResponse.session_token;
 		this->FullTextFromServer = SessionResponse.FullTextFromServer;
-		this->Error = SessionResponse.Error;
 		this->LoginResponse = LoginResponse;
 		this->StartSessionResponse = SessionResponse;
+		this->ErrorData = ErrorData;
 	}
 };
 
@@ -545,7 +392,6 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FAuthResponseBP, FLootLockerAuthenticationResp
 DECLARE_DYNAMIC_DELEGATE_OneParam(FAppleSessionResponseBP, FLootLockerAppleSessionResponse, Var);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FGoogleSessionResponseBP, FLootLockerGoogleSessionResponse, Var);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FEpicSessionResponseBP, FLootLockerEpicSessionResponse, Var);
-DECLARE_DYNAMIC_DELEGATE_OneParam(FAuthDefaultResponseBP, FLootLockerAuthenticationDefaultResponse, AuthVar);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerLoginResponseDelegateBP, FLootLockerLoginResponse, AuthVar);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerVerifySessionResponseBP, FLootLockerWhiteLabelVerifySessionResponse, Response);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLootLockerWhiteLabelLoginAndSessionResponseDelegateBP, FLootLockerWhiteLabelLoginAndSessionResponse, Var);
@@ -555,7 +401,6 @@ DECLARE_DELEGATE_OneParam(FLootLockerSessionResponse, FLootLockerAuthenticationR
 DECLARE_DELEGATE_OneParam(FLootLockerAppleSessionResponseDelegate, FLootLockerAppleSessionResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerGoogleSessionResponseDelegate, FLootLockerGoogleSessionResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerEpicSessionResponseDelegate, FLootLockerEpicSessionResponse);
-DECLARE_DELEGATE_OneParam(FLootLockerDefaultAuthenticationResponse, FLootLockerAuthenticationDefaultResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerLoginResponseDelegate, FLootLockerLoginResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerWhiteLabelVerifySessionDelegate, FLootLockerWhiteLabelVerifySessionResponse);
 DECLARE_DELEGATE_OneParam(FLootLockerWhiteLabelLoginAndSessionResponseDelegate, FLootLockerWhiteLabelLoginAndSessionResponse);
@@ -578,7 +423,6 @@ public:
 	static void WhiteLabelRequestUserVerification(const int& UserId, const FLootLockerDefaultResponseBP& OnCompletedRequestBP = FLootLockerDefaultResponseBP(), const FLootLockerDefaultDelegate& OnCompletedRequest = FLootLockerDefaultDelegate());
     static void WhiteLabelRequestUserVerificationByEmail(const FString& Email, const FLootLockerDefaultResponseBP& OnCompletedRequestBP = FLootLockerDefaultResponseBP(), const FLootLockerDefaultDelegate& OnCompletedRequest = FLootLockerDefaultDelegate());
     static void WhiteLabelRequestPasswordReset(const FString& Email, const FLootLockerDefaultResponseBP& OnCompletedRequestBP = FLootLockerDefaultResponseBP(), const FLootLockerDefaultDelegate& OnCompletedRequest = FLootLockerDefaultDelegate());
-	static void StartSession(const FString& PlayerId, const FAuthResponseBP& OnCompletedRequestBP = FAuthResponseBP(), const FLootLockerSessionResponse& OnCompletedRequest = FLootLockerSessionResponse());
 	static void StartPlaystationNetworkSession(const FString& PsnOnlineId, const FAuthResponseBP& AuthResponseBP = FAuthResponseBP(), const FLootLockerSessionResponse& Delegate = FLootLockerSessionResponse());
 	static void StartAndroidSession(const FString& DeviceId, const FAuthResponseBP& AuthResponseBP = FAuthResponseBP(), const FLootLockerSessionResponse& Delegate = FLootLockerSessionResponse());
 	static void StartGoogleSession(const FString& IdToken, const FGoogleSessionResponseBP& OnCompletedRequestBP = FGoogleSessionResponseBP(), const FLootLockerGoogleSessionResponseDelegate& OnCompletedRequest = FLootLockerGoogleSessionResponseDelegate());
@@ -592,8 +436,8 @@ public:
 	static void StartXboxSession(const FString& XboxUserToken, const FAuthResponseBP& OnCompletedRequestBP = FAuthResponseBP(), const FLootLockerSessionResponse& OnCompletedRequest = FLootLockerSessionResponse());
 	static void StartAppleSession(const FString& AuthorizationCode, const FAppleSessionResponseBP& OnCompletedRequestBP = FAppleSessionResponseBP(), const FLootLockerAppleSessionResponseDelegate& OnCompletedRequest = FLootLockerAppleSessionResponseDelegate());
 	static void RefreshAppleSession(const FString& RefreshToken, const FAppleSessionResponseBP& OnCompletedRequestBP = FAppleSessionResponseBP(), const FLootLockerAppleSessionResponseDelegate& OnCompletedRequest = FLootLockerAppleSessionResponseDelegate());
-	static void VerifyPlayer(const FString& PlatformToken, const FString& Platform, const FAuthDefaultResponseBP& OnCompletedRequestBP = FAuthDefaultResponseBP(), const FLootLockerDefaultAuthenticationResponse& OnCompletedRequest = FLootLockerDefaultAuthenticationResponse());
-	static void EndSession(const FAuthDefaultResponseBP& OnCompletedRequestBP = FAuthDefaultResponseBP(), const FLootLockerDefaultAuthenticationResponse& OnCompletedRequest = FLootLockerDefaultAuthenticationResponse());
+	static void VerifyPlayer(const FString& PlatformToken, const FString& Platform, const FLootLockerDefaultResponseBP& OnCompletedRequestBP = FLootLockerDefaultResponseBP(), const FLootLockerDefaultDelegate& OnCompletedRequest = FLootLockerDefaultDelegate());
+	static void EndSession(const FLootLockerDefaultResponseBP& OnCompletedRequestBP = FLootLockerDefaultResponseBP(), const FLootLockerDefaultDelegate& OnCompletedRequest = FLootLockerDefaultDelegate());
     static void WhiteLabelLoginAndStartSession(const FString& Email, const FString& Password, bool bRemember, const FLootLockerWhiteLabelLoginAndSessionResponseDelegateBP& LootLockerWhiteLabelLoginAndSessionResponseDelegateBP = FLootLockerWhiteLabelLoginAndSessionResponseDelegateBP(), const FLootLockerWhiteLabelLoginAndSessionResponseDelegate& LootLockerWhiteLabelLoginAndSessionResponseDelegate = FLootLockerWhiteLabelLoginAndSessionResponseDelegate());
 	static void StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseBP& OnCompletedRequestBP = FLootLockerAppleGameCenterSessionResponseBP(), const FLootLockerAppleGameCenterSessionResponseDelegate& OnCompletedRequest = FLootLockerAppleGameCenterSessionResponseDelegate()); 
 	static void RefreshAppleGameCenterSession(const FString& RefreshToken, const FLootLockerAppleGameCenterSessionResponseBP& OnCompletedRequestBP = FLootLockerAppleGameCenterSessionResponseBP(), const FLootLockerAppleGameCenterSessionResponseDelegate& OnCompletedRequest = FLootLockerAppleGameCenterSessionResponseDelegate());

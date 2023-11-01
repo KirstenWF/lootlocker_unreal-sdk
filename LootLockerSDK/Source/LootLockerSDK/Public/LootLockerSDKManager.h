@@ -3,12 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LootLockerConfig.h"
 #include "GameAPI/LootLockerAccountLinkRequestHandler.h"
 #include "GameAPI/LootLockerAssetInstancesRequestHandler.h"
 #include "GameAPI/LootLockerAssetsRequestHandler.h"
 #include "GameAPI/LootLockerAuthenticationRequestHandler.h"
+#include "GameAPI/LootLockerBalanceRequestHandler.h"
+#include "GameAPI/LootLockerCatalogRequestHandler.h"
 #include "GameAPI/LootLockerCharacterRequestHandler.h"
 #include "GameAPI/LootLockerCollectablesRequestHandler.h"
+#include "GameAPI/LootLockerCurrencyRequestHandler.h"
 #include "GameAPI/LootLockerDropTablesRequestHandler.h"
 #include "GameAPI/LootLockerHeroRequestHandler.h"
 #include "GameAPI/LootLockerLeaderboardRequestHandler.h"
@@ -23,8 +27,6 @@
 #include "GameAPI/LootLockerPurchasesRequestHandler.h"
 #include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
 #include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
-#include "LootLockerConfig.h"
-#include "LootLockerPlatformManager.h"
 
 #include "ServerAPI/LootLockerServerAuthenticationRequestHandler.h"
 #include "ServerAPI/LootLockerServerPersistentStorageRequestHandler.h"
@@ -42,17 +44,6 @@ public:
     //==================================================
     //Authentication
     //==================================================
-
-    /**
-     * Start a session with the platform used in the platform selected in Project Settings -> Platform.
-     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
-     * https://ref.lootlocker.io/game-api/#authentication-request
-     *
-     * @param PlayerIdentifier The ID of the player on the platform the game is currently running on.
-     * @param OnCompletedRequest Delegate for handling the server response.
-     */
-    [[deprecated("This method has been deprecated. Please use the appropriate \"StartXSession\" instead.\nFor Android use StartAndroidSession. For iOS use StartAppleSession. For Steam use StartSteamSession. For PlayStation use StartPlaystationNetworkSession. For Amazon Luna use StartAmazonLunaSession. If you are unsure of what to use, use GuestLogin.")]]
-	static void StartSession(const FString& PlayerIdentifier, const FLootLockerSessionResponse& OnCompletedRequest);
 
     /**
      * Start a session for a Playstation Network user
@@ -267,7 +258,7 @@ public:
      *
      * @param UserId The id recieved from Oculus
      * @param Nonce The nonce recieved from Oculus
-     * @param OnMetaSessionRequestCompleted Delegate for handling the server response.
+     * @param OncompletedRequest Delegate for handling the server response.
      */
     static void StartMetaSession(const FString& UserId, const FString& Nonce, const FLootLockerMetaSessionResponseDelegate& OncompletedRequest);
 
@@ -276,8 +267,7 @@ public:
      * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
      * The Meta platform must be enabled in the web console for this to work.
      *
-     * @param RefreshToken (Optional) Token received in response from StartMetaSession request. If not supplied we will attempt to resolve it from stored player data.
-     * @param OnRefreshEpicSessionCompleted Delegate for handling the response
+     * @param OncompletedRequest Delegate for handling the response
      */
     static void RefreshMetaSession(const FLootLockerMetaSessionResponseDelegate& OncompletedRequest) { RefreshMetaSession("", OncompletedRequest); };
     
@@ -287,7 +277,7 @@ public:
      * The Meta platform must be enabled in the web console for this to work.
      *
      * @param RefreshToken (Optional) Token received in response from StartMetaSession request. If not supplied we will attempt to resolve it from stored player data.
-     * @param OnRefreshEpicSessionCompleted Delegate for handling the response
+     * @param OncompletedRequest Delegate for handling the response
      */
     static void RefreshMetaSession(const FString& RefreshToken, const FLootLockerMetaSessionResponseDelegate& OncompletedRequest);
 
@@ -310,7 +300,7 @@ public:
      * @param OnCompletedRequest Response Delegate to handle the response
      * @param Platform Optional parameter to call explicitly for a specific platform
      */
-    static void VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultAuthenticationResponse& OnCompletedRequest, const FString Platform = FString(TEXT("")));
+    static void VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompletedRequest, const FString Platform = FString(TEXT("")));
 
     /**
      * End active session (if any exists)
@@ -320,7 +310,7 @@ public:
      *
      * @param OnCompletedRequest Delegate for handling the response of type LootLockerSessionResponse
      */
-    static void EndSession(const FLootLockerDefaultAuthenticationResponse& OnCompletedRequest);
+    static void EndSession(const FLootLockerDefaultDelegate& OnCompletedRequest);
 
     //==================================================
     // White Label
@@ -509,9 +499,8 @@ public:
     * Get Multiple Other Players XP And Level.
     * https://ref.lootlocker.com/game-api/#get-multiple-other-players-xp-and-level
     *
-    * @param Platform Specify which platform the Ids are for.
-    * @param PlayerIDs Lost of player ids on the specified platform.
-    * @param OnGetOtherPlayerInfoRequestCompleted Delegate to be invoked with the server response.
+    * @param Request Object specifying what ids to lookup
+    * @param OnCompletedRequest Delegate to be invoked with the server response.
     */
 	static void GetMultiplePlayersXp(FLootLockerMultiplePlayersXpRequest& Request, const FPMultiplePlayersXP& OnCompletedRequest);
 
@@ -945,15 +934,25 @@ public:
 	static void AddAssetToHeroLoadout(const int32 HeroID, const int32 AssetInstanceID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest);
 
     /**
-     * Equip the specified Asset Variation to the specified Hero that the current player owns
+     * Equip the specified Global Asset (default variation) to the specified Hero that the current player owns
      * https://ref.lootlocker.com/game-api/#add-asset-to-hero-loadout
      *
      * @param HeroID Id of the hero
-     * @param AssetID Desc
-     * @param AssetVariationID Desc
+     * @param AssetID The id of the global asset to equip
      * @param OnCompletedRequest Delegate for handling the response
      */
-	static void AddAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID, const int32 AssetVariationID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest);
+	static void AddGlobalAssetToHeroLoadout(const int32 HeroID, const int32 AssetID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest);
+ 
+    /**
+     * Equip the specified Global Asset Variation to the specified Hero that the current player owns
+     * https://ref.lootlocker.com/game-api/#add-asset-to-hero-loadout
+     *
+     * @param HeroID Id of the hero
+     * @param AssetID The id of the global asset to equip
+     * @param AssetVariationID The variation id of the global asset to equip
+     * @param OnCompletedRequest Delegate for handling the response
+     */
+	static void AddGlobalAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID, const int32 AssetVariationID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest);
 
     /**
      * Unequip the specified Asset Instance to the specified Hero that the current player owns
@@ -1332,17 +1331,6 @@ public:
     static void GetAllKeyValuePairsForAssetInstance(int AssetInstanceId, const FAssetInstanceStorageItemsResponseDelegate& OnCompletedRequest);
 
     /**
-     * DEPRECATED, please use GetAllKeyValuePairsForAssetInstance
-     * Get all key/value pairs for an asset instance.
-     * https://ref.lootlocker.io/game-api/#getting-all-key-value-pairs-to-an-instance
-     *
-     * @param AssetInstanceId asset instance ID.
-     * @param OnCompletedRequest Delegate for handling the server response.
-     */
-    [[deprecated("Deprecated, please use GetAllKeyValuePairsForAssetInstance")]]
-    static void GetAllKeyValuePairsToAnInstanceForAssetInstance(int AssetInstanceId, const FAssetInstanceStorageItemsResponseDelegate& OnCompletedRequest);
-
-    /**
      * Get a key/value pair for an asset instance.
      * https://ref.lootlocker.io/game-api/#getting-a-key-value-pair-by-id
      *
@@ -1647,7 +1635,7 @@ public:
      * Once you have purchased a rental asset, you need to activate the rental for it to become available for the player.
      * https://ref.lootlocker.io/game-api/#activating-a-rental-asset
      *
-     * @param AssetId ID of the asset.
+     * @param AssetInstanceId ID of the asset.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
     static void ActivateRentalAsset(int AssetInstanceId, const FActivateRentalAssetResponseDelegate& OnCompletedRequest);
@@ -1661,6 +1649,15 @@ public:
      * @param OnCompletedRequest Delegate for handling the server response.
      */
     static void GetOrderDetails(int32 OrderId, const bool NoProducts, const FOrderStatusDetailsDelegate& OnCompletedRequest);
+
+    /**
+     * Purchase one or more catalog items using a specified wallet
+     * 
+     * @param WalletId The id of the wallet to use for the purchase
+     * @param ItemsToPurchase A list of items to purchase along with the quantity of each item to purchase
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void LootLockerPurchaseCatalogItems(const FString& WalletId, const TArray<FLootLockerCatalogItemAndQuantityPair> ItemsToPurchase, const FLootLockerDefaultDelegate& OnCompletedRequest);
 
     //==================================================
     //Trigger Events
@@ -1792,7 +1789,7 @@ public:
     static void GetAllMemberRanks(FString MemberId, const int Count, const int After, const FLootLockerGetAllMemberRanksResponseDelegate& OnCompletedRequest);
 	
     //==================================================
-    //Drop Table
+    // Drop Table
     // https://ref.lootlocker.com/game-api/#drop-tables
     //==================================================
 
@@ -1816,6 +1813,104 @@ public:
      * @param OnCompletedRequest Delegate for handling the server response
      */
     static void PickDropsFromDropTable(const TArray<int> Picks, const int TableId,const FFLootLockerPickDropsFromDropTableResponseDelegate& OnCompletedRequest);
+
+    //==================================================
+    // Currencies
+    // https://ref.lootlocker.com/game-api/#currencies
+    //==================================================
+
+    /**
+     * Get a list of available currencies for the game
+     *
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void ListCurrencies(const FLootLockerListCurrenciesResponseDelegate& OnCompletedRequest);
+
+    /**
+     * Get a list of the denominations available for a specific currency
+     *
+     * @param CurrencyCode The code of the currency to fetch denominations for
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void GetCurrencyDenominationsByCode(const FString& CurrencyCode, const FLootLockerListDenominationsResponseDelegate& OnCompletedRequest);
+
+    //==================================================
+    // Balances
+    // https://ref.lootlocker.com/game-api/#balances
+    //==================================================
+
+    /**
+     * Get a list of balances in a specified wallet
+     *
+     * @param WalletID Unique ID of the wallet to get balances for
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void ListBalancesInWallet(const FString& WalletID, const FLootLockerListBalancesForWalletResponseDelegate& OnComplete);
+
+    /**
+     * Get information about a specified wallet
+     *
+     * @param WalletID Unique ID of the wallet to get information for
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void GetWalletByWalletID(const FString& WalletID, const FLootLockerGetWalletResponseDelegate& OnComplete);
+
+    /**
+     * Get information about a wallet for a specified holder
+     *
+     * @param HolderULID ULID of the holder of the wallet you want to get information for
+     * @param HolderType The type of the holder to get the wallet for
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void GetWalletByHolderID(const FString& HolderULID, const ELootLockerWalletHolderTypes& HolderType, const FLootLockerGetWalletResponseDelegate& OnComplete);
+
+    /**
+     * Credit (increase) the specified amount of the provided currency to the provided wallet
+     *
+     * @param WalletID Unique ID of the wallet to credit the given amount of the given currency to
+     * @param CurrencyID Unique ID of the currency to credit
+     * @param Amount The amount of the given currency to credit to the given wallet
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void CreditBalanceToWallet(const FString& WalletID, const FString& CurrencyID, const FString& Amount, const FLootLockerCreditWalletResponseDelegate& OnComplete);
+
+    /**
+     * Debit (decrease) the specified amount of the provided currency to the provided wallet
+     *
+     * @param WalletID Unique ID of the wallet to debit the given amount of the given currency from
+     * @param CurrencyID Unique ID of the currency to debit
+     * @param Amount The amount of the given currency to debit from the given wallet
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void DebitBalanceToWallet(const FString& WalletID, const FString& CurrencyID, const FString& Amount, const FLootLockerDebitWalletResponseDelegate& OnComplete);
+
+    //==================================================
+    // Catalogs
+    //==================================================
+    /**
+     * List the catalogs available for the game
+     *
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void ListCatalogs(const FLootLockerListCatalogsResponseDelegate& OnComplete);
+
+    /**
+     * List the items available in a specific catalog
+     *
+     * @param CatalogKey Unique Key of the catalog that you want to get items for
+     * @param Count Optional: Amount of catalog items to receive. Use null to simply get the default amount.
+     * @param After Optional: Used for pagination, this is the cursor to start getting items from. Use null to get items from the beginning. Use the cursor from a previous call to get the next count of items in the list.
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void ListCatalogItems(const FString& CatalogKey, int Count, const FString& After, const FLootLockerListCatalogPricesResponseDelegate& OnComplete);
+
+    /**
+     * List the items available in a specific catalog
+     *
+     * @param CatalogKey Unique Key of the catalog that you want to get items for
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void ListCatalogItems(const FString& CatalogKey, const FLootLockerListCatalogPricesResponseDelegate& OnComplete) { ListCatalogItems(CatalogKey, -1, "", OnComplete);  }
 
 	//==================================================
 	//Miscellaneous

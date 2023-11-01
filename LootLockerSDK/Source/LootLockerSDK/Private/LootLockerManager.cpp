@@ -2,12 +2,8 @@
 
 #include "LootLockerManager.h"
 
+#include "GameAPI/LootLockerCatalogRequestHandler.h"
 #include "GameAPI/LootLockerMiscellaneousRequestHandler.h"
-
-void ULootLockerManager::StartSession(const FString& PlayerIdentifier, const FAuthResponseBP& OnStartedSessionRequestCompleted)
-{
-    ULootLockerAuthenticationRequestHandler::StartSession(PlayerIdentifier, OnStartedSessionRequestCompleted);
-}
 
 void ULootLockerManager::StartPlaystationNetworkSession(const FString& PsnOnlineId, const FAuthResponseBP& OnStartedSessionRequestCompleted)
 {
@@ -139,12 +135,12 @@ void ULootLockerManager::GuestLogin(const FAuthResponseBP &OnCompletedRequestBP,
 	ULootLockerAuthenticationRequestHandler::GuestLogin(PlayerIdentifier, OnCompletedRequestBP);
 }
 
-void ULootLockerManager::VerifyPlayer(const FString& PlatformToken, const FAuthDefaultResponseBP& OnVerifyPlayerRequestCompleted, const FString Platform /*= FString()*/)
+void ULootLockerManager::VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultResponseBP& OnVerifyPlayerRequestCompleted, const FString Platform /*= FString()*/)
 {
     ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, OnVerifyPlayerRequestCompleted);
 }
 
-void ULootLockerManager::EndSession(const  FAuthDefaultResponseBP& OnEndSessionRequestCompleted)
+void ULootLockerManager::EndSession(const  FLootLockerDefaultResponseBP& OnEndSessionRequestCompleted)
 {
     ULootLockerAuthenticationRequestHandler::EndSession(OnEndSessionRequestCompleted);
 }
@@ -395,9 +391,14 @@ void ULootLockerManager::AddAssetToHeroLoadout(const int32 HeroID, const int32 A
 	ULootLockerHeroRequestHandler::AddAssetToHeroLoadout(HeroID, AssetInstanceID, OnCompleteBP,  FHeroLoadoutReseponseDelegate());
 }
 
-void ULootLockerManager::AddAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID, const int32 AssetVariationID, const FHeroLoadoutReseponseBP &OnCompleteBP)
+void ULootLockerManager::AddGlobalAssetToHeroLoadout(const int32 HeroID, const int32 AssetID, const FHeroLoadoutReseponseBP& OnCompleteBP)
 {
-	ULootLockerHeroRequestHandler::AddAssetVariationToHeroLoadout(HeroID, AssetID, AssetVariationID, OnCompleteBP, FHeroLoadoutReseponseDelegate());
+	ULootLockerHeroRequestHandler::AddGlobalAssetToHeroLoadout(HeroID, AssetID, OnCompleteBP, FHeroLoadoutReseponseDelegate());
+}
+
+void ULootLockerManager::AddGlobalAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID, const int32 AssetVariationID, const FHeroLoadoutReseponseBP& OnCompleteBP)
+{
+	ULootLockerHeroRequestHandler::AddGlobalAssetVariationToHeroLoadout(HeroID, AssetID, AssetVariationID, OnCompleteBP, FHeroLoadoutReseponseDelegate());
 }
 
 void ULootLockerManager::RemoveAssetToHeroLoadout(const int32 HeroID, const int32 AssetInstanceID, const FHeroLoadoutReseponseBP &OnCompleteBP)
@@ -586,11 +587,6 @@ void ULootLockerManager::GetAllKeyValuePairsForAssetInstance(int AssetInstanceId
     ULootLockerAssetInstancesRequestHandler::GetAllKeyValuePairsForAssetInstance(AssetInstanceId, OnGetAllKeyValuePairsForAssetInstanceCompleted);
 }
 
-void ULootLockerManager::GetAllKeyValuePairsToAnInstanceForAssetInstance(int AssetInstanceId, const FAssetInstanceStorageItemsResponseDelegateBP& OnGetAllKeyValuePairsToAnInstanceForAssetInstanceCompleted)
-{
-    ULootLockerAssetInstancesRequestHandler::GetAllKeyValuePairsToAnInstanceForAssetInstance(AssetInstanceId, OnGetAllKeyValuePairsToAnInstanceForAssetInstanceCompleted);
-}
-
 void ULootLockerManager::GetAKeyValuePairByIdForAssetInstance(int AssetInstanceId, int StorageItemId, const FAssetInstanceStorageItemResponseDelegateBP& OnGetAKeyValuePairByIdForAssetInstanceCompleted)
 {
     ULootLockerAssetInstancesRequestHandler::GetAKeyValuePairByIdForAssetInstance(AssetInstanceId, StorageItemId, OnGetAKeyValuePairByIdForAssetInstanceCompleted);
@@ -765,6 +761,11 @@ void ULootLockerManager::GetOrderDetails(int32 OrderId, const bool NoProducts, c
 	ULootLockerPurchasesRequestHandler::GetOrderDetails(OrderId, NoProducts, OnCompleteBP, FOrderStatusDetailsDelegate());
 }
 
+void ULootLockerManager::LootLockerPurchaseCatalogItems(const FString& WalletId, const TArray<FLootLockerCatalogItemAndQuantityPair> ItemsToPurchase, const FLootLockerDefaultResponseBP& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::PurchaseCatalogItems(WalletId, ItemsToPurchase, OnCompletedRequest);
+}
+
 void ULootLockerManager::TriggerEvent(const FLootLockerTriggerEvent& Event, const FTriggerEventResponseDelegateBP& OnTriggerEventCompleted)
 {
     ULootLockerTriggerEventsRequestHandler::TriggerEvent(Event, OnTriggerEventCompleted);
@@ -850,6 +851,56 @@ void ULootLockerManager::PickDropsFromDropTable(TArray<int> Picks, int TableId, 
     FLootLockerPickDropsFromDropTableRequest request;
     request.picks = Picks;
     ULootLockerDropTablesRequestHandler::PickDropsFromDropTable(request,TableId, OnCompletedRequestBP);
+}
+
+// Currencies
+void ULootLockerManager::ListCurrencies(const FLootLockerListCurrenciesResponseBP& OnCompletedRequest)
+{
+    ULootLockerCurrencyRequestHandler::ListCurrencies(OnCompletedRequest);
+}
+
+void ULootLockerManager::GetCurrencyDenominationsByCode(const FString& CurrencyCode, const FLootLockerListDenominationsResponseBP& OnCompletedRequest)
+{
+    ULootLockerCurrencyRequestHandler::GetCurrencyDenominationsByCode(CurrencyCode, OnCompletedRequest);
+}
+
+// Balances
+
+void ULootLockerManager::ListBalancesInWallet(const FString& WalletID, const FLootLockerListBalancesForWalletResponseBP& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::ListBalancesInWallet(WalletID, OnComplete);
+}
+
+void ULootLockerManager::GetWalletByWalletID(const FString& WalletID, const FLootLockerGetWalletResponseBP& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::GetWalletByWalletID(WalletID, OnComplete);
+}
+
+void ULootLockerManager::GetWalletByHolderID(const FString& HolderULID, const ELootLockerWalletHolderTypes& HolderType, const FLootLockerGetWalletResponseBP& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::GetWalletByHolderID(HolderULID, HolderType, OnComplete);
+}
+
+void ULootLockerManager::CreditBalanceToWallet(const FString& WalletID, const FString& CurrencyID, const FString& Amount, const FLootLockerCreditWalletResponseBP& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::CreditBalanceToWallet(WalletID, CurrencyID, Amount, OnComplete);
+}
+
+void ULootLockerManager::DebitBalanceToWallet(const FString& WalletID, const FString& CurrencyID, const FString& Amount, const FLootLockerDebitWalletResponseBP& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::DebitBalanceToWallet(WalletID, CurrencyID, Amount, OnComplete);
+}
+
+// Catalogs
+
+void ULootLockerManager::ListCatalogs(const FLootLockerListCatalogsResponseBP& OnComplete)
+{
+    ULootLockerCatalogRequestHandler::ListCatalogs(OnComplete);
+}
+
+void ULootLockerManager::ListCatalogItems(const FString& CatalogKey, int Count, const FString& After, const FLootLockerListCatalogPricesResponseBP& OnComplete)
+{
+    ULootLockerCatalogRequestHandler::ListCatalogItems(CatalogKey, Count, After, OnComplete);
 }
 
 // Miscellaneous

@@ -14,11 +14,6 @@ void ULootLockerSDKManager::WhiteLabelLogin(const FString& Email, const FString&
     ULootLockerAuthenticationRequestHandler::WhiteLabelLogin(Email, Password, Remember, FLootLockerLoginResponseDelegateBP(), OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::StartSession(const FString& PlayerIdentifier, const FLootLockerSessionResponse& OnCompleteRequest)
-{
-	ULootLockerAuthenticationRequestHandler::StartSession(PlayerIdentifier, FAuthResponseBP(), OnCompleteRequest);
-}
-
 void ULootLockerSDKManager::StartPlaystationNetworkSession(const FString& PsnOnlineId, const FLootLockerSessionResponse& OnCompletedRequest)
 {
     ULootLockerAuthenticationRequestHandler::StartPlaystationNetworkSession(PsnOnlineId, FAuthResponseBP(), OnCompletedRequest);
@@ -139,14 +134,14 @@ void ULootLockerSDKManager::GuestLogin(const FLootLockerSessionResponse &OnCompl
 	ULootLockerAuthenticationRequestHandler::GuestLogin(PlayerIdentifier, FAuthResponseBP(), OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultAuthenticationResponse& OnCompleteRequest, const FString Platform)
+void ULootLockerSDKManager::VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompleteRequest, const FString Platform)
 {
-	ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, FAuthDefaultResponseBP(), OnCompleteRequest);
+	ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, FLootLockerDefaultResponseBP(), OnCompleteRequest);
 }
 
-void ULootLockerSDKManager::EndSession(const FLootLockerDefaultAuthenticationResponse& OnCompleteRequest)
+void ULootLockerSDKManager::EndSession(const FLootLockerDefaultDelegate& OnCompleteRequest)
 {
-	ULootLockerAuthenticationRequestHandler::EndSession(FAuthDefaultResponseBP(), OnCompleteRequest);
+	ULootLockerAuthenticationRequestHandler::EndSession(FLootLockerDefaultResponseBP(), OnCompleteRequest);
 }
 
 #if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
@@ -396,10 +391,14 @@ void ULootLockerSDKManager::AddAssetToHeroLoadout(const int32 HeroID, const int3
 	ULootLockerHeroRequestHandler::AddAssetToHeroLoadout(HeroID, AssetInstanceID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::AddAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID,
-    const int32 AssetVariationID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest)
+void ULootLockerSDKManager::AddGlobalAssetToHeroLoadout(const int32 HeroID, const int32 AssetID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::AddAssetVariationToHeroLoadout(HeroID, AssetID, AssetVariationID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
+	ULootLockerHeroRequestHandler::AddGlobalAssetToHeroLoadout(HeroID, AssetID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::AddGlobalAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID, const int32 AssetVariationID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest)
+{
+	ULootLockerHeroRequestHandler::AddGlobalAssetVariationToHeroLoadout(HeroID, AssetID, AssetVariationID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::RemoveAssetToHeroLoadout(const int32 HeroID, const int32 AssetInstanceID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
@@ -642,11 +641,6 @@ void ULootLockerSDKManager::GetAllKeyValuePairsForAssetInstance(int AssetInstanc
     ULootLockerAssetInstancesRequestHandler::GetAllKeyValuePairsForAssetInstance(AssetInstanceId, FAssetInstanceStorageItemsResponseDelegateBP(), OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::GetAllKeyValuePairsToAnInstanceForAssetInstance(int AssetInstanceId, const FAssetInstanceStorageItemsResponseDelegate& OnCompletedRequest)
-{
-    ULootLockerAssetInstancesRequestHandler::GetAllKeyValuePairsToAnInstanceForAssetInstance(AssetInstanceId, FAssetInstanceStorageItemsResponseDelegateBP(), OnCompletedRequest);
-}
-
 void ULootLockerSDKManager::GetAKeyValuePairByIdForAssetInstance(int AssetInstanceId, int StorageItemId, const FAssetInstanceStorageItemResponseDelegate& OnCompletedRequest)
 {
     ULootLockerAssetInstancesRequestHandler::GetAKeyValuePairByIdForAssetInstance(AssetInstanceId, StorageItemId, FAssetInstanceStorageItemResponseDelegateBP(), OnCompletedRequest);
@@ -812,6 +806,11 @@ void ULootLockerSDKManager::GetOrderDetails(int32 OrderId, const bool NoProducts
     ULootLockerPurchasesRequestHandler::GetOrderDetails(OrderId, NoProducts, FOrderStatusDetailsBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::LootLockerPurchaseCatalogItems(const FString& WalletId, const TArray<FLootLockerCatalogItemAndQuantityPair> ItemsToPurchase, const FLootLockerDefaultDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::PurchaseCatalogItems(WalletId, ItemsToPurchase, FLootLockerDefaultResponseBP(), OnCompletedRequest);
+}
+
 //Trigger
 void ULootLockerSDKManager::TriggerEvent(const FLootLockerTriggerEvent& Event, const FTriggerEventResponseDelegate& OnCompletedRequest)
 {
@@ -900,6 +899,57 @@ void ULootLockerSDKManager::PickDropsFromDropTable(const TArray<int> Picks,const
     FLootLockerPickDropsFromDropTableRequest Request;
     Request.picks = Picks;
     ULootLockerDropTablesRequestHandler::PickDropsFromDropTable(Request, TableId, FFLootLockerPickDropsFromDropTableResponseBP(), OnCompletedRequest);
+}
+
+// Currencies
+
+void ULootLockerSDKManager::ListCurrencies(const FLootLockerListCurrenciesResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerCurrencyRequestHandler::ListCurrencies(FLootLockerListCurrenciesResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::GetCurrencyDenominationsByCode(const FString& CurrencyCode, const FLootLockerListDenominationsResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerCurrencyRequestHandler::GetCurrencyDenominationsByCode(CurrencyCode, FLootLockerListDenominationsResponseBP(), OnCompletedRequest);
+}
+
+// Balances
+
+void ULootLockerSDKManager::ListBalancesInWallet(const FString& WalletID, const FLootLockerListBalancesForWalletResponseDelegate& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::ListBalancesInWallet(WalletID, FLootLockerListBalancesForWalletResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetWalletByWalletID(const FString& WalletID, const FLootLockerGetWalletResponseDelegate& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::GetWalletByWalletID(WalletID, FLootLockerGetWalletResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetWalletByHolderID(const FString& HolderULID, const ELootLockerWalletHolderTypes& HolderType, const FLootLockerGetWalletResponseDelegate& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::GetWalletByHolderID(HolderULID, HolderType, FLootLockerGetWalletResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::CreditBalanceToWallet(const FString& WalletID, const FString& CurrencyID, const FString& Amount, const FLootLockerCreditWalletResponseDelegate& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::CreditBalanceToWallet(WalletID, CurrencyID, Amount, FLootLockerCreditWalletResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::DebitBalanceToWallet(const FString& WalletID, const FString& CurrencyID, const FString& Amount, const FLootLockerDebitWalletResponseDelegate& OnComplete)
+{
+    ULootLockerBalanceRequestHandler::DebitBalanceToWallet(WalletID, CurrencyID, Amount, FLootLockerDebitWalletResponseBP(), OnComplete);
+}
+
+// Catalogs
+
+void ULootLockerSDKManager::ListCatalogs(const FLootLockerListCatalogsResponseDelegate& OnComplete)
+{
+    ULootLockerCatalogRequestHandler::ListCatalogs(FLootLockerListCatalogsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ListCatalogItems(const FString& CatalogKey, int Count, const FString& After, const FLootLockerListCatalogPricesResponseDelegate& OnComplete)
+{
+    ULootLockerCatalogRequestHandler::ListCatalogItems(CatalogKey, Count, After, FLootLockerListCatalogPricesResponseBP(), OnComplete);
 }
 
 // Miscellaneous

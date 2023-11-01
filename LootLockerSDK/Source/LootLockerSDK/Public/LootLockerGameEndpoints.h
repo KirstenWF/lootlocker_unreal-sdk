@@ -176,6 +176,7 @@ public:
     static FLootLockerEndPoints PollingOrderStatusEndpoint;
     static FLootLockerEndPoints ActivateRentalAssetEndpoint;
     static FLootLockerEndPoints GetOrderDetailsEndpoint;
+    static FLootLockerEndPoints PurchaseCatalogItem;
 
     //Trigger Events
     static FLootLockerEndPoints TriggerEventEndpoint;
@@ -204,6 +205,22 @@ public:
     //DropTables
     static FLootLockerEndPoints ComputeAndLockDropTable;
     static FLootLockerEndPoints PickDropsFromDropTable;
+
+    // Currencies
+    static FLootLockerEndPoints ListCurrencies;
+    static FLootLockerEndPoints GetCurrencyDenominationsByCode;
+
+    // Balances
+    static FLootLockerEndPoints ListBalancesInWallet;
+    static FLootLockerEndPoints GetWalletByWalletId;
+    static FLootLockerEndPoints GetWalletByHolderId;
+    static FLootLockerEndPoints CreditBalanceToWallet;
+    static FLootLockerEndPoints DebitBalanceToWallet;
+    static FLootLockerEndPoints CreateWallet;
+
+    // Catalogs
+    static FLootLockerEndPoints ListCatalogs;
+    static FLootLockerEndPoints ListCatalogItemsByKey;
 
     // Miscellaneous
     static FLootLockerEndPoints GetServerTimeEndpoint;
