@@ -85,7 +85,3 @@ Plugins/*/Intermediate/*
 DemoProject/DerivedDataCache/*
 /LootLockerSDK/Binaries/*
 /LootLockerSDK/Intermediate/*
-
-# Local files
-LootLockerSDK/Binaries/*
-LootLockerSDK/Intermediate/*
