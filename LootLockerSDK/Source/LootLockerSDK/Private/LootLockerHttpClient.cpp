@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021 LootLocker
+// Copyright (c) 2021 LootLocker
 
 
 #include "LootLockerHttpClient.h"
@@ -99,12 +99,7 @@ void ULootLockerHttpClient::UploadFile(const FString& endPoint, const FString& r
     TArray<uint8> UpFileRawData;
     if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath))
 	{
-        FLootLockerResponse FailResponse;
-        FailResponse.success = false;
-        FailResponse.FullTextFromServer = FString::Format(TEXT("Could not read file {0}"), { FilePath });
-        FailResponse.Error = FailResponse.FullTextFromServer;
-
-        onCompleteRequest.ExecuteIfBound(FailResponse);
+        onCompleteRequest.ExecuteIfBound(LootLockerResponseFactory::Error<FLootLockerResponse>(FString::Format(TEXT("Could not read file {0}"), { FilePath })));
         return;
     }
 
@@ -115,7 +110,7 @@ void ULootLockerHttpClient::UploadFile(const FString& endPoint, const FString& r
 	UploadRawData(endPoint, requestType, UpFileRawData, FileName, AdditionalFields, onCompleteRequest, customHeaders);
 }
 
-void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString& requestType, TArray<uint8> UpFileRawData, const FString& FileName, const TMap<FString, FString> AdditionalFields, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders) const
+void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString& requestType, const TArray<uint8>& UpFileRawData, const FString& FileName, const TMap<FString, FString>& AdditionalFields, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders) const
 {
     FHttpModule* HttpModule = &FHttpModule::Get();
 
@@ -138,12 +133,6 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     }
 
     Request->SetVerb(requestType);
-
-    TArray<uint8> UpFileRawData;
-    if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath)) {
-        onCompleteRequest.ExecuteIfBound(LootLockerResponseFactory::Error<FLootLockerResponse>(FString::Format(TEXT("Could not read file {0}"), { FilePath })));
-        return;
-    }
 
     TArray<uint8> Data;
 
@@ -176,19 +165,19 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     Request->SetContent(Data);
 
     Request->OnProcessRequestComplete().BindLambda([onCompleteRequest, this, requestType, endPoint](FHttpRequestPtr Req, const FHttpResponsePtr& Response, bool bWasSuccessful)
+    {
+        FLootLockerResponse response;
+
+        response.success = ResponseIsValid(Response, bWasSuccessful);
+        response.StatusCode = Response->GetResponseCode();
+        response.FullTextFromServer = Response->GetContentAsString();
+        if (!response.success)
         {
-            FLootLockerResponse response;
+            FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
+            LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
+        }
 
-            response.success = ResponseIsValid(Response, bWasSuccessful);
-            response.StatusCode = Response->GetResponseCode();
-            response.FullTextFromServer = Response->GetContentAsString();
-            if (!response.success)
-            {
-                FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
-                LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
-            }
-
-            onCompleteRequest.ExecuteIfBound(response);
-        });
+        onCompleteRequest.ExecuteIfBound(response);
+    });
     Request->ProcessRequest();
 }

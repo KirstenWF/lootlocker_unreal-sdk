@@ -16,8 +16,8 @@ class LOOTLOCKERSDK_API ULootLockerHttpClient : public UObject
 public:
     ULootLockerHttpClient();
     void SendApi(const FString& endPoint, const FString& requestType, const FString& data, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
-	void UploadFile(const FString& endPoint, const FString& requestType, const FString& FilePath, const TMap<FString, FString> AdditionalFields, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
-	void UploadRawData(const FString& endPoint, const FString& requestType, TArray<uint8> UpFileRawData, const FString& FileName, const TMap<FString, FString> AdditionalFields, const FResponseCallback& onCompleteRequest,TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
+	void UploadFile(const FString& endPoint, const FString& requestType, const FString& FilePath, const TMap<FString, FString>& AdditionalFields, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
+	void UploadRawData(const FString& endPoint, const FString& requestType, const TArray<uint8>& UpFileRawData, const FString& FileName, const TMap<FString, FString>& AdditionalFields, const FResponseCallback& onCompleteRequest,TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
 
     static void LogFailedRequestInformation(const FLootLockerResponse& Response, const FString& RequestMethod, const FString& Endpoint, const FString& Data);
 private:

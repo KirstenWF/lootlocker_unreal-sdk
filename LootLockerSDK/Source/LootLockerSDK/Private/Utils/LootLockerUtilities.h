@@ -72,10 +72,6 @@ namespace LootLockerUtilities
 
     FString ObfuscateString(const FObfuscationDetails& ObfuscationDetail, const FString& StringToObfuscate);
 
-    static FString ObfuscateJsonStringForLogging(const FString& JsonBody)
-    {
-        return ObfuscateJsonStringForLogging(UObfuscationSettings::FieldsToObfuscate, JsonBody);
-    }
 }
 
 template<typename ResponseType>
@@ -194,7 +190,9 @@ struct LLAPI
 
 #if WITH_EDITOR
 		UE_LOG(LogLootLockerGameSDK, Log, TEXT("Request:"));
-		UE_LOG(LogLootLockerGameSDK, Log, TEXT("ContentString:%s"), *ContentString);
+        if (!ContentString.IsEmpty() && !IsEmptyJsonString(ContentString)) {
+            UE_LOG(LogLootLockerGameSDK, Log, TEXT("ContentString:%s"), *LootLockerUtilities::ObfuscateJsonStringForLogging(ContentString));
+        }
 		UE_LOG(LogLootLockerGameSDK, Log, TEXT("EndpointWithArguments:%s"), *EndpointWithArguments);
 #endif //WITH_EDITOR
 

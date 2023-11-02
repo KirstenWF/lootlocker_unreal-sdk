@@ -15,7 +15,7 @@ void ULootLockerServerAuthenticationRequestHandler::StartSession(const FServerAu
 {
 	FLootLockerServerAuthenticationRequest AuthRequest;
 	const ULootLockerConfig* config = GetDefault<ULootLockerConfig>();
-	AuthRequest.is_development = config->OnDevelopmentMode;
+	AuthRequest.is_development = true;
 	AuthRequest.game_version = config->GameVersion;
 
 	LLAPI<FLootLockerServerAuthenticationResponse>::CallServerAPI(HttpClient, AuthRequest, ULootLockerServerEndpoints::StartSessionEndpoint, {}, EmptyQueryParams, OnCompletedRequestBP, OnCompletedRequest, LLAPI<FLootLockerServerAuthenticationResponse>::FResponseInspectorCallback::CreateLambda([](const FLootLockerServerAuthenticationResponse& Response)
