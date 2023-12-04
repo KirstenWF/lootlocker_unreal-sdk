@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LootLockerConfig.h"
-#include "Engine/DataAsset.h"
 #include "GameAPI/LootLockerAssetInstancesRequestHandler.h"
 #include "GameAPI/LootLockerAssetsRequestHandler.h"
 #include "GameAPI/LootLockerAuthenticationRequestHandler.h"
@@ -25,13 +23,9 @@
 #include "GameAPI/LootLockerPlayerRequestHandler.h"
 #include "GameAPI/LootLockerProgressionsRequestHandler.h"
 #include "GameAPI/LootLockerPurchasesRequestHandler.h"
+#include "GameAPI/LootLockerRemoteSessionRequestHandler.h"
 #include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
 #include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
-
-#include "ServerAPI/LootLockerServerAuthenticationRequestHandler.h"
-#include "ServerAPI/LootLockerServerPersistentStorageRequestHandler.h"
-#include "ServerAPI/LootLockerServerPlayerFileRequestHandler.h"
-
 #include "LootLockerManager.generated.h"
 
 UCLASS(Blueprintable)
@@ -377,59 +371,32 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
     static void EndSession(const FLootLockerDefaultResponseBP& OnEndSessionRequestCompleted);
 
-#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
     //==================================================
-	// Account Linking https://ref.lootlocker.com/game-api/#universal-auth
+    // Remote Sessions
     //==================================================
 
     /**
-     * Start an account linking process on behalf of the currently signed in player
-     * When you want to link an additional provider to a player, you start by initiating an account link. The player can then navigate to the online link flow using the code_page_url and code, or the qr_code and continue the linking process.
-     * For the duration of the linking process you can check the status using the CheckAccountLinkingProcessStatus method.
-     * Returned from this method is the ID of the linking process, make sure to save that so that you can check the status of the process later.
-     * https://ref.lootlocker.com/game-api/#start-account-link
+     * Start a remote session
+     * If you want to let your local user sign in using another device then you use this method. First you will get the lease information needed to allow a secondary device to authenticate.
+     * While the process is ongoing, the remoteSessionLeaseStatusUpdate action (if one is provided) will be invoked intermittently (about once a second) to update you on the status of the process.
+     * When the process has come to an end (whether successfully or not), the onComplete action will be invoked with the updated information.
      *
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkStartResponse
+     * @param RemoteSessionLeaseInformation Will be invoked once to provide the lease information that the secondary device can use to authenticate
+     * @param RemoteSessionLeaseStatusUpdate Will be invoked intermittently to update the status lease process
+     * @param OnComplete Invoked when the remote session process has run to completion containing either a valid session or information on why the process failed
+     * @param PollingIntervalSeconds Optional: How often to poll the status of the remote session process
+     * @param TimeOutAfterMinutes Optional: How long to allow the process to take in it's entirety
      */
-    //TODO: Uncomment UFUNCTION
-    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
-    static void StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseBP& OnResponseCompleted);
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Remote Session", meta = (AdvancedDisplay = "PollingIntervalSeconds,TimeOutAfterMinutes", Count = 1.0f, After = 5.0f))
+    static FString StartRemoteSession(const FLootLockerLeaseRemoteSessionResponseDelegateBP& RemoteSessionLeaseInformation, const FLootLockerRemoteSessionStatusPollingResponseDelegateBP& RemoteSessionLeaseStatusUpdate, const FLootLockerStartRemoteSessionResponseDelegateBP& OnComplete, float PollingIntervalSeconds = 1.0f, float TimeOutAfterMinutes = 5.0f);
 
     /**
-     * Check the status of an ongoing account linking process
-     * https://ref.lootlocker.com/game-api/#check-account-link-status
+     * Cancel an ongoing remote session process
      *
-     * @param LinkID The ID of the account linking process which was returned when starting the linking process
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkProcessStatusResponse
+     * @param ProcessID The id of the remote session process that you want to cancel
      */
-    //TODO: Uncomment UFUNCTION
-    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
-    static void CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseBP& OnResponseCompleted);
-
-    /**
-     * Cancel an ongoing account linking process
-     * The response will be empty unless an error occurs
-     * https://ref.lootlocker.com/game-api/#cancel-account-link
-     *
-     * @param LinkID The ID of the account linking process which was returned when starting the linking process
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerCancelAccountLinkingProcessResponse
-     */
-    //TODO: Uncomment UFUNCTION
-    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
-    static void CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseBP& OnResponseCompleted);
-
-    /**
-     * Unlink a provider from the currently signed in player
-     * The response will be empty unless an error occurs
-     * https://ref.lootlocker.com/game-api/#unlink-provider
-     *
-     * @param Provider What provider to unlink from the currently logged in player
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerUnlinkProviderFromAccountResponse
-     */
-    //TODO: Uncomment UFUNCTION
-    //UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Account Linking")
-    static void UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseBP& OnResponseCompleted);
-#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Remote Session")
+    static void CancelRemoteSessionProcess(FString ProcessID);
 
     //==================================================
     //Players

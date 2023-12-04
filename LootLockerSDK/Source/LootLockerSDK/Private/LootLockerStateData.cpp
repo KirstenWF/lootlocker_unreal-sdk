@@ -2,13 +2,13 @@
 
 
 #include "LootLockerStateData.h"
-#include "LootLockerConfig.h"
+
 #include "LootLockerPersistedState.h"
+#include "LootLockerSDK.h"
 #include "Kismet/GameplayStatics.h"
 
 FString ULootLockerStateData::Token = "";
 FString ULootLockerStateData::SteamToken = "";
-FString ULootLockerStateData::ServerToken = "";
 FString ULootLockerStateData::RefreshToken = "";
 FString ULootLockerStateData::PlayerIdentifier = FGenericPlatformMisc::GetDeviceId != nullptr ? FGenericPlatformMisc::GetDeviceId() : FGuid::NewGuid().ToString();
 FString ULootLockerStateData::WhiteLabelEmail = "";
@@ -30,7 +30,6 @@ void ULootLockerStateData::LoadStateFromDiskIfNeeded()
 	if (ULootLockerPersistedState* LoadedState = Cast<ULootLockerPersistedState>(UGameplayStatics::LoadGameFromSlot(SaveSlot, SaveIndex)))
 	{
 		Token = LoadedState->Token;
-		ServerToken = LoadedState->ServerToken;
 		PlayerIdentifier = LoadedState->PlayerIdentifier.IsEmpty() ? FPlatformMisc::GetDeviceId() : LoadedState->PlayerIdentifier;
 		SteamToken = LoadedState->SteamToken;
 		RefreshToken = LoadedState->RefreshToken;
@@ -50,7 +49,6 @@ void ULootLockerStateData::SaveStateToDisk()
 	if (ULootLockerPersistedState* SavedState = Cast<ULootLockerPersistedState>(UGameplayStatics::CreateSaveGameObject(ULootLockerPersistedState::StaticClass())))
 	{
 		SavedState->Token = Token;
-		SavedState->ServerToken = ServerToken;
 		SavedState->PlayerIdentifier = PlayerIdentifier;
 		SavedState->SteamToken = SteamToken;
 		SavedState->RefreshToken = RefreshToken;
@@ -70,12 +68,6 @@ FString ULootLockerStateData::GetToken()
 {
 	LoadStateFromDiskIfNeeded();
 	return Token;
-}
-
-FString ULootLockerStateData::GetServerToken()
-{
-	LoadStateFromDiskIfNeeded();
-	return ServerToken;
 }
 
 FString ULootLockerStateData::GetSteamToken() 
@@ -120,16 +112,6 @@ void ULootLockerStateData::SetToken(FString InToken) {
 		return;
 	}
 	Token = InToken;
-	SaveStateToDisk();
-}
-void ULootLockerStateData::SetServerToken(FString InServerToken)
-{
-	LoadStateFromDiskIfNeeded();
-	if (InServerToken.Equals(ServerToken))
-	{
-		return;
-	}
-	ServerToken = InServerToken;
 	SaveStateToDisk();
 }
 void ULootLockerStateData::SetSteamToken(FString InSteamToken) {

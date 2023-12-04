@@ -145,28 +145,15 @@ void ULootLockerManager::EndSession(const  FLootLockerDefaultResponseBP& OnEndSe
     ULootLockerAuthenticationRequestHandler::EndSession(OnEndSessionRequestCompleted);
 }
 
-#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
-// Account Linking
-void ULootLockerManager::StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseBP& OnResponseCompleted) 
+FString ULootLockerManager::StartRemoteSession(const FLootLockerLeaseRemoteSessionResponseDelegateBP& RemoteSessionLeaseInformation, const FLootLockerRemoteSessionStatusPollingResponseDelegateBP& RemoteSessionLeaseStatusUpdate, const FLootLockerStartRemoteSessionResponseDelegateBP& OnComplete, float PollingIntervalSeconds, float TimeOutAfterMinutes)
 {
-    ULootLockerAccountLinkRequestHandler::StartAccountLinkingProcess(OnResponseCompleted);
+    return ULootLockerRemoteSessionRequestHandler::StartRemoteSession(RemoteSessionLeaseInformation, FLootLockerLeaseRemoteSessionResponseDelegate(), RemoteSessionLeaseStatusUpdate, FLootLockerRemoteSessionStatusPollingResponseDelegate(), OnComplete, FLootLockerStartRemoteSessionResponseDelegate(), PollingIntervalSeconds, TimeOutAfterMinutes);
 }
 
-void ULootLockerManager::CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseBP& OnResponseCompleted) 
+void ULootLockerManager::CancelRemoteSessionProcess(FString ProcessID)
 {
-    ULootLockerAccountLinkRequestHandler::CheckAccountLinkingProcessStatus(LinkID, OnResponseCompleted);
+    ULootLockerRemoteSessionRequestHandler::CancelRemoteSessionProcess(ProcessID);
 }
-
-void ULootLockerManager::CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseBP& OnResponseCompleted) 
-{
-    ULootLockerAccountLinkRequestHandler::CancelAccountLinkingProcess(LinkID, OnResponseCompleted);
-}
-
-void ULootLockerManager::UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseBP& OnResponseCompleted) 
-{
-    ULootLockerAccountLinkRequestHandler::UnlinkProviderFromAccount(Provider, OnResponseCompleted);
-}
-#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
 
 void ULootLockerManager::GetPlayerInfo(const FPInfoResponseBP& OnGetPlayerInfoRequestComplete)
 {

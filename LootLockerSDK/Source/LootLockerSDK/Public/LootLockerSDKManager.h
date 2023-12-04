@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LootLockerConfig.h"
-#include "GameAPI/LootLockerAccountLinkRequestHandler.h"
 #include "GameAPI/LootLockerAssetInstancesRequestHandler.h"
 #include "GameAPI/LootLockerAssetsRequestHandler.h"
 #include "GameAPI/LootLockerAuthenticationRequestHandler.h"
@@ -25,6 +23,7 @@
 #include "GameAPI/LootLockerPlayerRequestHandler.h"
 #include "GameAPI/LootLockerProgressionsRequestHandler.h"
 #include "GameAPI/LootLockerPurchasesRequestHandler.h"
+#include "GameAPI/LootLockerRemoteSessionRequestHandler.h"
 #include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
 #include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
 
@@ -313,6 +312,31 @@ public:
     static void EndSession(const FLootLockerDefaultDelegate& OnCompletedRequest);
 
     //==================================================
+    // Remote Sessions
+    //==================================================
+
+    /**
+     * Start a remote session
+     * If you want to let your local user sign in using another device then you use this method. First you will get the lease information needed to allow a secondary device to authenticate.
+     * While the process is ongoing, the remoteSessionLeaseStatusUpdate action (if one is provided) will be invoked intermittently (about once a second) to update you on the status of the process.
+     * When the process has come to an end (whether successfully or not), the onComplete action will be invoked with the updated information.
+     *
+     * @param RemoteSessionLeaseInformation Will be invoked once to provide the lease information that the secondary device can use to authenticate
+     * @param RemoteSessionLeaseStatusUpdate Will be invoked intermittently to update the status lease process
+     * @param OnComplete Invoked when the remote session process has run to completion containing either a valid session or information on why the process failed
+     * @param PollingIntervalSeconds Optional: How often to poll the status of the remote session process
+     * @param TimeOutAfterMinutes Optional: How long to allow the process to take in it's entirety
+     */
+    static FString StartRemoteSession(const FLootLockerLeaseRemoteSessionResponseDelegate& RemoteSessionLeaseInformation, const FLootLockerRemoteSessionStatusPollingResponseDelegate& RemoteSessionLeaseStatusUpdate, const FLootLockerStartRemoteSessionResponseDelegate& OnComplete, float PollingIntervalSeconds = 1.0f, float TimeOutAfterMinutes = 5.0f);
+
+    /**
+     * Cancel an ongoing remote session process
+     *
+     * @param ProcessID The id of the remote session process that you want to cancel
+     */
+    static void CancelRemoteSessionProcess(const FString& ProcessID);
+
+    //==================================================
     // White Label
     //==================================================
 
@@ -406,52 +430,6 @@ public:
      * @param OnCompletedRequest Delegate for handling the response of type FLootLockerResponse
      */
     static void WhiteLabelRequestPasswordReset(const FString& Email, const FLootLockerDefaultDelegate& OnCompletedRequest);
-
-#if defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
-    //==================================================
-	// Account Linking https://ref.lootlocker.com/game-api/#universal-auth
-    //==================================================
-
-    /**
-     * Start an account linking process on behalf of the currently signed in player
-     * When you want to link an additional provider to a player, you start by initiating an account link. The player can then navigate to the online link flow using the code_page_url and code, or the qr_code and continue the linking process.
-     * For the duration of the linking process you can check the status using the CheckAccountLinkingProcessStatus method.
-     * Returned from this method is the ID of the linking process, make sure to save that so that you can check the status of the process later.
-     * https://ref.lootlocker.com/game-api/#start-account-link
-     *
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkStartResponse
-     */
-    static void StartAccountLinkingProcess(const FLootLockerAccountLinkStartResponseDelegate& OnResponseCompleted);
-
-    /**
-     * Check the status of an ongoing account linking process
-     * https://ref.lootlocker.com/game-api/#check-account-link-status
-     *
-     * @param LinkID The ID of the account linking process which was returned when starting the linking process
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerAccountLinkProcessStatusResponse
-     */
-    static void CheckAccountLinkingProcessStatus(const FString& LinkID, const FLootLockerAccountLinkProcessStatusResponseDelegate& OnResponseCompleted);
-
-    /**
-     * Cancel an ongoing account linking process
-     * The response will be empty unless an error occurs
-     * https://ref.lootlocker.com/game-api/#cancel-account-link
-     *
-     * @param LinkID The ID of the account linking process which was returned when starting the linking process
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerCancelAccountLinkingProcessResponse
-     */
-    static void CancelAccountLinkingProcess(const FString& LinkID, const FLootLockerCancelAccountLinkingProcessResponseDelegate& OnResponseCompleted);
-
-    /**
-     * Unlink a provider from the currently signed in player
-     * The response will be empty unless an error occurs
-     * https://ref.lootlocker.com/game-api/#unlink-provider
-     *
-     * @param Provider
-     * @param OnCompletedRequest Delegate for handling the response of type FLootLockerUnlinkProviderFromAccountResponse
-     */
-    static void UnlinkProviderFromAccount(const ELootLockerPlatform Provider, const FLootLockerUnlinkProviderFromAccountResponseDelegate& OnResponseCompleted);
-#endif //defined LOOTLOCKER_ENABLE_ACCOUNT_LINKING
 
     //==================================================
 	//Player calls

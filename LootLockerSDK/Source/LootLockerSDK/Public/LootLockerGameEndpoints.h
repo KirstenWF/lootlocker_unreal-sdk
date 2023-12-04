@@ -2,8 +2,32 @@
 
 #pragma once
 
-#include "LootLockerConfig.h"
 #include "LootLockerGameEndpoints.generated.h"
+
+UENUM(BlueprintType)
+enum class ELootLockerHTTPMethod : uint8
+{
+    GET = 0         UMETA(DisplayName = "GET"),
+    POST = 1        UMETA(DisplayName = "POST"),
+    DELETE = 2      UMETA(DisplayName = "DELETE"),
+    PUT = 3         UMETA(DisplayName = "PUT"),
+    HEAD = 4        UMETA(DisplayName = "HEAD"),
+    CREATE = 5      UMETA(DisplayName = "CREATE"),
+    OPTIONS = 6     UMETA(DisplayName = "OPTIONS"),
+    PATCH = 7       UMETA(DisplayName = "PATCH"),
+    UPLOAD = 8      UMETA(DisplayName = "UPLOAD")
+};
+
+USTRUCT(BlueprintType)
+struct FLootLockerEndPoints
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
+    FString endpoint;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, BlueprintReadWrite, Category = "LootLocker")
+    ELootLockerHTTPMethod requestMethod = ELootLockerHTTPMethod::GET;
+};
 
 UCLASS()
 class LOOTLOCKERSDK_API ULootLockerGameEndpoints : public UObject
@@ -27,6 +51,10 @@ public:
     static FLootLockerEndPoints GuestloginEndpoint;
     static FLootLockerEndPoints MetaSessionEndpoint;
 
+    // Remote Sessions
+    static FLootLockerEndPoints LeaseRemoteSession;
+    static FLootLockerEndPoints StartRemoteSession;
+
     // White Label
     static FLootLockerEndPoints WhiteLabelSignupEndpoint;
     static FLootLockerEndPoints WhiteLabelLoginEndpoint;
@@ -34,13 +62,6 @@ public:
     static FLootLockerEndPoints WhiteLabelVerifySessionEndpoint;
     static FLootLockerEndPoints WhiteLabelRequestPasswordResetEndpoint;
     static FLootLockerEndPoints WhiteLabelRequestVerificationEndpoint;
-
-
-    // Account Linking TODO: NAME IS WIP
-    static FLootLockerEndPoints StartAccountLinkingProcess;
-    static FLootLockerEndPoints CheckAccountLinkingProcessStatus;
-    static FLootLockerEndPoints CancelAccountLinkingProcess;
-    static FLootLockerEndPoints UnlinkProviderFromAccount;
 
     // Files
     static FLootLockerEndPoints FileUploadEndpoint;
