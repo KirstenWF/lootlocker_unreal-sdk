@@ -120,7 +120,7 @@ struct FLootLockerLeaseRemoteSessionResponse : public FLootLockerResponse
      * The status of this lease process
      */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    ELootLockerRemoteSessionLeaseStatus Status;
+    ELootLockerRemoteSessionLeaseStatus Status = ELootLockerRemoteSessionLeaseStatus::Verified;
 };
 
 /**
@@ -134,7 +134,7 @@ struct FLootLockerRemoteSessionStatusPollingResponse : public FLootLockerRespons
      * The current status of this lease process.
      */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    ELootLockerRemoteSessionLeaseStatus Lease_status;
+    ELootLockerRemoteSessionLeaseStatus Lease_status = ELootLockerRemoteSessionLeaseStatus::Verified;
 };
 
 /**
@@ -148,7 +148,7 @@ struct FLootLockerStartRemoteSessionResponse : public FLootLockerAuthenticationR
      * The current status of this lease process. If this is not of the status Authorized, the rest of the fields in this object will be empty.
      */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    ELootLockerRemoteSessionLeaseStatus Lease_Status;
+    ELootLockerRemoteSessionLeaseStatus Lease_Status = ELootLockerRemoteSessionLeaseStatus::Verified;
     /**
      * A refresh token that can be used to refresh the remote session instead of signing in each time the session token expires
      */
