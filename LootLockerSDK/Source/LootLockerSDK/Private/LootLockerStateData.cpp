@@ -168,7 +168,6 @@ void ULootLockerStateData::ClearState()
 {
 	LoadStateFromDiskIfNeeded();
 	Token = "";
-	ServerToken = "";
 	SteamToken = "";
 	RefreshToken = "";
 	PlayerIdentifier = "";

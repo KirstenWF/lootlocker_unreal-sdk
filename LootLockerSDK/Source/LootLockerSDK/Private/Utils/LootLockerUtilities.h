@@ -163,59 +163,6 @@ struct LLAPI
         HttpClient->SendApi(EndpointWithArguments, RequestMethod, ContentString, SessionResponse, CustomHeaders);
     }
 
-	template<typename RequestType, typename BluePrintDelegate, typename CppDelegate>
-	static void CallServerAPI(ULootLockerHttpClient* HttpClient, RequestType RequestStruct, FLootLockerEndPoints Endpoint, const TArray<FStringFormatArg>& InOrderedArguments, const TMultiMap<FString, FString> QueryParams, const BluePrintDelegate& OnCompletedRequestBP, const CppDelegate& OnCompletedRequest, const FResponseInspectorCallback& ResponseInspectorCallback, TMap<FString, FString> CustomHeaders = TMap<FString, FString>())
-	{
-		FString ContentString;
-#if ENGINE_MAJOR_VERSION < 5
-		FJsonObjectConverter::UStructToJsonObjectString(RequestType::StaticStruct(), &RequestStruct, ContentString, 0, 0);
-		if (IsEmptyJsonString(ContentString))
-		{
-			ContentString = FString();
-		}
-#else
-		if (!std::is_same_v<RequestType, FLootLockerEmptyRequest>)
-		{
-			FJsonObjectConverter::UStructToJsonObjectString(RequestType::StaticStruct(), &RequestStruct, ContentString, 0, 0);
-		}
-#endif
-
-		// calculate endpoint
-		const ULootLockerConfig* Config = GetDefault<ULootLockerConfig>();
-		FString EndpointWithArguments = FString::Format(*Endpoint.endpoint, FStringFormatNamedArguments{{"domainKey", Config && !Config->DomainKey.IsEmpty() ? Config->DomainKey + "." : ""}});
-		EndpointWithArguments = FString::Format(*EndpointWithArguments, InOrderedArguments);
-
-		const ULootLockerConfig* config = GetDefault<ULootLockerConfig>();
-		CustomHeaders.Add(TEXT("x-server-key"), config->LootLockerServerKey);
-		CustomHeaders.Add(TEXT("x-auth-token"), ULootLockerStateData::GetServerToken());
-
-		if (QueryParams.Num() != 0)
-		{
-			FString Delimiter = "?";
-			for (const TPair<FString, FString>& Pair : QueryParams)
-			{
-				EndpointWithArguments = EndpointWithArguments + Delimiter + Pair.Key + "=" + Pair.Value;
-				Delimiter = "&";
-			}
-		}
-
-#if WITH_EDITOR
-		UE_LOG(LogLootLockerGameSDK, Log, TEXT("Request:"));
-        if (!ContentString.IsEmpty() && !IsEmptyJsonString(ContentString)) {
-            UE_LOG(LogLootLockerGameSDK, Log, TEXT("ContentString:%s"), *LootLockerUtilities::ObfuscateJsonStringForLogging(ContentString));
-        }
-		UE_LOG(LogLootLockerGameSDK, Log, TEXT("EndpointWithArguments:%s"), *EndpointWithArguments);
-#endif //WITH_EDITOR
-
-		const FString RequestMethod = ULootLockerConfig::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
-
-		// create callback lambda
-		const FResponseCallback SessionResponse = CreateLambda<BluePrintDelegate, CppDelegate>(OnCompletedRequestBP, OnCompletedRequest, ResponseInspectorCallback);
-
-		// send request
-		HttpClient->SendApi(EndpointWithArguments, RequestMethod, ContentString, SessionResponse, CustomHeaders);
-	}
-
     template<typename BluePrintDelegate, typename CppDelegate>
     static void UploadFileAPI(ULootLockerHttpClient* HttpClient, FString File, FLootLockerEndPoints Endpoint, const TArray<FStringFormatArg>& InOrderedArguments, const TMap<FString, FString> AdditionalData, const BluePrintDelegate& OnCompletedRequestBP, const CppDelegate& OnCompletedRequest, const FResponseInspectorCallback& ResponseInspectorCallback = LLAPI<ResponseType>::FResponseInspectorCallback::CreateLambda([](const ResponseType& Ignored) {}), TMap<FString, FString> CustomHeaders = TMap<FString, FString>())
     {
@@ -247,7 +194,7 @@ struct LLAPI
 		FString EndpointWithArguments = FString::Format(*Endpoint.endpoint, FStringFormatNamedArguments{{"domainKey", Config && !Config->DomainKey.IsEmpty() ? Config->DomainKey + "." : ""}});
 		EndpointWithArguments = FString::Format(*EndpointWithArguments, InOrderedArguments);
 
-		const FString RequestMethod = ULootLockerConfig::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
+		const FString RequestMethod = ULootLockerEnumUtils::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
 		CustomHeaders.Add(TEXT("x-session-token"), ULootLockerStateData::GetToken());
 
 #if WITH_EDITOR
