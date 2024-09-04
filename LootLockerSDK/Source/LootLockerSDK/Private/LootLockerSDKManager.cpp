@@ -3,6 +3,8 @@
 
 #include "LootLockerSDKManager.h"
 
+#include "LootLockerPlatformManager.h"
+
 //Authentication
 void ULootLockerSDKManager::WhiteLabelCreateAccount(const FString &Email, const FString &Password, const FLootLockerLoginResponseDelegate &OnCompletedRequest)
 {
@@ -27,6 +29,24 @@ void ULootLockerSDKManager::StartAndroidSession(const FString& DeviceId, const F
 void ULootLockerSDKManager::StartAmazonLunaSession(const FString& AmazonLunaGuid,const FLootLockerSessionResponse& OnCompletedRequest)
 {
     ULootLockerAuthenticationRequestHandler::StartAmazonLunaSession(AmazonLunaGuid, FAuthResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::VerifyPlayerAndStartSteamSession(const FString& SteamId64, const FString& PlatformToken, const FLootLockerSessionResponse& OnCompletedRequest, const int SteamAppId /* = -1 */)
+{
+    ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, ULootLockerCurrentPlatform::GetPlatformRepresentationForPlatform(ELootLockerPlatform::Steam).AuthenticationProviderString, SteamAppId, FLootLockerDefaultResponseBP(), FLootLockerDefaultDelegate::CreateLambda([SteamId64, OnCompletedRequest](FLootLockerResponse VerifyPlayerResponse)
+        {
+            if(!VerifyPlayerResponse.success)
+            {
+                FLootLockerAuthenticationResponse AuthResponse;
+                AuthResponse.success = VerifyPlayerResponse.success;
+                AuthResponse.FullTextFromServer = VerifyPlayerResponse.FullTextFromServer;
+                AuthResponse.StatusCode = VerifyPlayerResponse.StatusCode;
+                AuthResponse.ErrorData = VerifyPlayerResponse.ErrorData;
+                OnCompletedRequest.ExecuteIfBound(AuthResponse);
+                return;
+            }
+            StartSteamSession(SteamId64, OnCompletedRequest);
+        }));
 }
 
 void ULootLockerSDKManager::StartSteamSession(const FString& SteamId64, const FLootLockerSessionResponse& OnCompletedRequest)
@@ -134,9 +154,9 @@ void ULootLockerSDKManager::GuestLogin(const FLootLockerSessionResponse &OnCompl
 	ULootLockerAuthenticationRequestHandler::GuestLogin(PlayerIdentifier, FAuthResponseBP(), OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompleteRequest, const FString Platform)
+void ULootLockerSDKManager::VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompleteRequest, const FString& Platform)
 {
-	ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, FLootLockerDefaultResponseBP(), OnCompleteRequest);
+	ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, -1, FLootLockerDefaultResponseBP(), OnCompleteRequest);
 }
 
 void ULootLockerSDKManager::EndSession(const FLootLockerDefaultDelegate& OnCompleteRequest)
@@ -144,6 +164,37 @@ void ULootLockerSDKManager::EndSession(const FLootLockerDefaultDelegate& OnCompl
 	ULootLockerAuthenticationRequestHandler::EndSession(FLootLockerDefaultResponseBP(), OnCompleteRequest);
 }
 
+//==================================================
+// Connected Accounts
+//==================================================
+void ULootLockerSDKManager::ListConnectedAccounts(const FLootLockerListConnectedAccountsResponseDelegate& OnComplete)
+{
+    ULootLockerConnectedAccountsRequestHandler::ListConnectedAccounts(FLootLockerListConnectedAccountsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::DisconnectAccount(const ELootLockerAccountProvider AccountToDisconnect, const FLootLockerDefaultDelegate& OnComplete)
+{
+    ULootLockerConnectedAccountsRequestHandler::DisconnectAccount(AccountToDisconnect, FLootLockerDefaultResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ConnectGoogleAccount(const FString& IdToken, const FLootLockerAccountConnectedResponseDelegate& OnComplete)
+{
+    ULootLockerConnectedAccountsRequestHandler::ConnectGoogleAccount(IdToken, FLootLockerAccountConnectedResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ConnectGoogleAccount(const FString& IdToken, EGoogleAccountProviderPlatform Platform, const FLootLockerAccountConnectedResponseDelegate& OnComplete)
+{
+    ULootLockerConnectedAccountsRequestHandler::ConnectGoogleAccount(IdToken, Platform, FLootLockerAccountConnectedResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ConnectAppleAccountByRestSignIn(const FString& AuthorizationCode, const FLootLockerAccountConnectedResponseDelegate& OnComplete)
+{
+    ULootLockerConnectedAccountsRequestHandler::ConnectAppleAccountByRestSignIn(AuthorizationCode, FLootLockerAccountConnectedResponseBP(), OnComplete);
+}
+
+//==================================================
+// Remote Sessions
+//==================================================
 FString ULootLockerSDKManager::StartRemoteSession(const FLootLockerLeaseRemoteSessionResponseDelegate& RemoteSessionLeaseInformation, const FLootLockerRemoteSessionStatusPollingResponseDelegate& RemoteSessionLeaseStatusUpdate, const FLootLockerStartRemoteSessionResponseDelegate& OnComplete, float PollingIntervalSeconds, float TimeOutAfterMinutes)
 {
     return ULootLockerRemoteSessionRequestHandler::StartRemoteSession(FLootLockerLeaseRemoteSessionResponseDelegateBP(), RemoteSessionLeaseInformation, FLootLockerRemoteSessionStatusPollingResponseDelegateBP(), RemoteSessionLeaseStatusUpdate, FLootLockerStartRemoteSessionResponseDelegateBP(), OnComplete, PollingIntervalSeconds, TimeOutAfterMinutes);
@@ -152,6 +203,11 @@ FString ULootLockerSDKManager::StartRemoteSession(const FLootLockerLeaseRemoteSe
 void ULootLockerSDKManager::CancelRemoteSessionProcess(const FString& ProcessID)
 {
     ULootLockerRemoteSessionRequestHandler::CancelRemoteSessionProcess(ProcessID);
+}
+
+void ULootLockerSDKManager::RefreshRemoteSession(const FString& RefreshToken, const FLootLockerRefreshRemoteSessionResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerRemoteSessionRequestHandler::RefreshRemoteSession(RefreshToken, FLootLockerRefreshRemoteSessionResponseDelegateBP(), OnCompletedRequest);
 }
 
 //Player
@@ -621,6 +677,11 @@ void ULootLockerSDKManager::RemoveAssetFromFavourites(int AssetId, const FGetFav
     ULootLockerAssetsRequestHandler::RemoveAssetFromFavourites(AssetId, FGetFavouriteAssetIndicesResponseDelegateBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::GrantAssetToPlayerInventory(const int AssetID, const int AssetVariationID, const int AssetRentalOptionID, const FGrantAssetResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerAssetsRequestHandler::GrantAssetToPlayerInventory(AssetID, AssetVariationID, AssetRentalOptionID, FGrantAssetResponseDelegateBP(), OnCompletedRequest);
+}
+
 //Asset Instance
 
 void ULootLockerSDKManager::GetAllKeyValuePairsForAssetInstance(int AssetInstanceId, const FAssetInstanceStorageItemsResponseDelegate& OnCompletedRequest)
@@ -661,6 +722,11 @@ void ULootLockerSDKManager::InspectLootBox(int AssetInstanceId, const FLootBoxCo
 void ULootLockerSDKManager::OpenLootBox(int AssetInstanceId, const FOpenLootBoxResponseDelegate& OnCompletedRequest)
 {
     ULootLockerAssetInstancesRequestHandler::OpenLootBox(AssetInstanceId, FOpenLootBoxResponseDelegateBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::DeleteAssetInstanceFromPlayerInventory(int AssetInstanceID, const FDeleteAssetInstanceResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerAssetInstancesRequestHandler::DeleteAssetInstanceFromPlayerInventory(AssetInstanceID, FDeleteAssetInstanceResponseDelegateBP(), OnCompletedRequest);
 }
 
 //User Generated Candidate
@@ -793,9 +859,54 @@ void ULootLockerSDKManager::GetOrderDetails(int32 OrderId, const bool NoProducts
     ULootLockerPurchasesRequestHandler::GetOrderDetails(OrderId, NoProducts, FOrderStatusDetailsBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::LootLockerPurchaseSingleCatalogItem(const FString& WalletId, const FString& CatalogItemListingId, const FLootLockerDefaultDelegate& OnCompletedRequest)
+{
+    LootLockerPurchaseCatalogItems(WalletId, { { CatalogItemListingId, 1 } }, OnCompletedRequest);
+}
+
 void ULootLockerSDKManager::LootLockerPurchaseCatalogItems(const FString& WalletId, const TArray<FLootLockerCatalogItemAndQuantityPair> ItemsToPurchase, const FLootLockerDefaultDelegate& OnCompletedRequest)
 {
     ULootLockerPurchasesRequestHandler::PurchaseCatalogItems(WalletId, ItemsToPurchase, FLootLockerDefaultResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::RedeemAppleAppStorePurchaseForPlayer(const FString& TransactionId, const FLootLockerDefaultDelegate& OnCompletedRequest, bool Sandboxed)
+{
+    ULootLockerPurchasesRequestHandler::RedeemAppleAppStorePurchaseForPlayer(TransactionId, Sandboxed, FLootLockerDefaultResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::RedeemAppleAppStorePurchaseForClass(const int ClassId, const FString& TransactionId, const FLootLockerDefaultDelegate& OnCompletedRequest, bool Sandboxed)
+{
+    ULootLockerPurchasesRequestHandler::RedeemAppleAppStorePurchaseForClass(ClassId, TransactionId, Sandboxed, FLootLockerDefaultResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::RedeemGooglePlayStorePurchaseForPlayer(const FString& ProductId, const FString& PurchaseToken, const FLootLockerDefaultDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::RedeemGooglePlayStorePurchaseForPlayer(ProductId, PurchaseToken, FLootLockerDefaultResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::RedeemGooglePlayStorePurchaseForClass(const int ClassId, const FString& ProductId, const FString& PurchaseToken, const FLootLockerDefaultDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::RedeemGooglePlayStorePurchaseForClass(ClassId, ProductId, PurchaseToken, FLootLockerDefaultResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::BeginSteamPurchaseRedemption(const FString& SteamId, const FString& Currency, const FString& Language, const FString& CatalogItemId, const FLootLockerBeginSteamPurchaseRedemptionDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::BeginSteamPurchaseRedemption(SteamId, Currency, Language, CatalogItemId, FLootLockerBeginSteamPurchaseRedemptionDelegateBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::BeginSteamPurchaseRedemptionForClass(const int ClassId, const FString& SteamId, const FString& Currency, const FString& Language, const FString& CatalogItemId, const FLootLockerBeginSteamPurchaseRedemptionDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::BeginSteamPurchaseRedemptionForClass(ClassId, SteamId, Currency, Language, CatalogItemId, FLootLockerBeginSteamPurchaseRedemptionDelegateBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::QuerySteamPurchaseRedemptionStatus(const FString& EntitlementId, const FLootLockerQuerySteamPurchaseRedemptionStatusDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::QuerySteamPurchaseRedemptionStatus(EntitlementId, FLootLockerQuerySteamPurchaseRedemptionStatusDelegateBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::FinalizeSteamPurchaseRedemption(const FString& EntitlementId, const FLootLockerDefaultDelegate& OnCompletedRequest)
+{
+    ULootLockerPurchasesRequestHandler::FinalizeSteamPurchaseRedemption(EntitlementId, FLootLockerDefaultResponseBP(), OnCompletedRequest);
 }
 
 //Trigger
@@ -875,6 +986,21 @@ void ULootLockerSDKManager::GetAllMemberRanks(FString MemberId, const int Count,
     ULootLockerLeaderboardRequestHandler::GetAllMemberRanks(GetAllMemberRanksRequest, FLootLockerGetAllMemberRanksResponseBP(), OnCompletedRequest);
 }
 
+void ULootLockerSDKManager::ListLeaderboardArchive(const FString& LeaderboardKey, const FLootLockerLeaderboardArchiveResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerLeaderboardArchiveRequestHandler::ListLeaderboardArchive(LeaderboardKey, FLootLockerLeaderboardArchiveResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::GetLeaderboardArchive(const FString& Key, int Count, const FString& After, const FLootLockerLeaderboardArchiveDetailResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerLeaderboardArchiveRequestHandler::GetLeaderboardArchive(Key, Count, After, FLootLockerLeaderboardArchiveDetailReponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::GetLeaderboardDetails(const FString& LeaderboardKey, const FLootLockerLeaderboardDetailsResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerLeaderboardRequestHandler::GetLeaderboardDetails(LeaderboardKey, FLootLockerLeaderboardDetailsResponseBP(), OnCompletedRequest);
+}
+
 // Droptables
 void ULootLockerSDKManager::ComputeAndLockDropTable(const int TableId, const FLootLockerComputeAndLockDropTableResponseDelegate& OnCompletedRequest)
 {
@@ -937,6 +1063,54 @@ void ULootLockerSDKManager::ListCatalogs(const FLootLockerListCatalogsResponseDe
 void ULootLockerSDKManager::ListCatalogItems(const FString& CatalogKey, int Count, const FString& After, const FLootLockerListCatalogPricesResponseDelegate& OnComplete)
 {
     ULootLockerCatalogRequestHandler::ListCatalogItems(CatalogKey, Count, After, FLootLockerListCatalogPricesResponseBP(), OnComplete);
+}
+
+// Entitlements
+void ULootLockerSDKManager::ListEntitlements(const int Count, const FString& After, const FLootLockerListEntitlementsResponseDelegate& OnComplete)
+{
+ULootLockerEntitlementRequestHandler::ListEntitlements(Count, After, FLootLockerListEntitlementsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetEntitlement(const FString& EntitlementID, FLootLockerSingleEntitlementResponseDelegate& OnComplete)
+{
+    ULootLockerEntitlementRequestHandler::GetEntitlement(EntitlementID, FLootLockerSingleEntitlementResponseBP(), OnComplete);
+}
+
+// Feedback
+void ULootLockerSDKManager::ListPlayerFeedbackCategories(const FLootLockerListFeedbackCategoryResponseDelegate& OnComplete)
+{
+    ULootLockerFeedbackRequestHandler::ListFeedbackCategories(ELootLockerFeedbackType::Player, FLootLockerListFeedbackCategoryResponseBP(), OnComplete);
+
+}
+
+void ULootLockerSDKManager::ListGameFeedbackCategories(const FLootLockerListFeedbackCategoryResponseDelegate& OnComplete)
+{
+    ULootLockerFeedbackRequestHandler::ListFeedbackCategories(ELootLockerFeedbackType::Game, FLootLockerListFeedbackCategoryResponseBP(), OnComplete);
+
+}
+
+void ULootLockerSDKManager::ListUGCFeedbackCategories(const FLootLockerListFeedbackCategoryResponseDelegate& OnComplete)
+{
+    ULootLockerFeedbackRequestHandler::ListFeedbackCategories(ELootLockerFeedbackType::Ugc, FLootLockerListFeedbackCategoryResponseBP(), OnComplete);
+
+}
+
+void ULootLockerSDKManager::SendPlayerFeedback(const FString& Ulid, const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseDelegate& OnComplete)
+{
+    ULootLockerFeedbackRequestHandler::SendFeedback(Ulid, Description, CategoryID, ELootLockerFeedbackType::Player, FLootLockerSendFeedbackResponseBP(), OnComplete);
+
+}
+
+void ULootLockerSDKManager::SendGameFeedback(const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseDelegate& OnComplete)
+{
+    ULootLockerFeedbackRequestHandler::SendFeedback("", Description, CategoryID, ELootLockerFeedbackType::Game, FLootLockerSendFeedbackResponseBP(), OnComplete);
+
+}
+
+void ULootLockerSDKManager::SendUGCFeedback(const FString& Ulid, const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseDelegate& OnComplete)
+{
+    ULootLockerFeedbackRequestHandler::SendFeedback(Ulid, Description, CategoryID, ELootLockerFeedbackType::Ugc, FLootLockerSendFeedbackResponseBP(), OnComplete);
+
 }
 
 // Miscellaneous

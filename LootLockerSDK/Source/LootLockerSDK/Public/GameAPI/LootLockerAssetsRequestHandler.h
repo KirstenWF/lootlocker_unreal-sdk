@@ -80,14 +80,6 @@ struct FLootLockerRarity
 };
 
 USTRUCT(BlueprintType)
-struct FLootLockerLinks
-{
-    GENERATED_BODY()
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    FString thumbnail;
-};
-
-USTRUCT(BlueprintType)
 struct FLootLockerRentalOption
 {
     GENERATED_BODY()
@@ -102,7 +94,7 @@ struct FLootLockerRentalOption
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FString sales_price;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    FLootLockerLinks links;
+    TMap<FString, FString> links;
 };
 
 USTRUCT(BlueprintType)
@@ -124,7 +116,7 @@ struct FLootLockerVariation
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FString secondary_color;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    FLootLockerLinks links;
+    TMap<FString, FString> links;
 };
 
 USTRUCT(BlueprintType)
@@ -198,7 +190,7 @@ struct FLootLockerAsset : public FLootLockerHasKeyValueStorage
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FString description;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
-    FLootLockerLinks links;
+    TMap<FString, FString> links;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FLootLockerRarity rarity;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
@@ -346,6 +338,17 @@ struct FLootLockerAssetBone {
 };
 
 USTRUCT(BlueprintType)
+struct FLootLockerGrantAssetRequest {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int asset_id = 0;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int asset_variation_id = 0;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int asset_rental_option_id = 0;
+};
+
+USTRUCT(BlueprintType)
 struct FLootLockerGetAssetBonesResponse : public FLootLockerResponse
 {
     GENERATED_BODY()
@@ -361,17 +364,37 @@ struct FLootLockerGetFavouriteAssetIndicesResponse : public FLootLockerResponse
     TArray<int32> favourites;
 };
 
+USTRUCT(BlueprintType)
+struct FLootLockerGrantAssetResponse : public FLootLockerResponse
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int id = 0;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int asset_id = 0;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int asset_variation_id = 0;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    FString asset_ulid;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    FString acquisition_source;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    FString acquisition_date;
+};
+
 DECLARE_DYNAMIC_DELEGATE_OneParam(FContextDelegateBP, FLootLockerGetContextResponse, ContextsResponse);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FAssetsResponseDelegateBP, FLootLockerGetAssetsResponse, AssetsResponse);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FAssetBonesResponseDelegateBP, FLootLockerGetAssetBonesResponse, AssetBonesResponse);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FGetFavouriteAssetIndicesResponseDelegateBP, FLootLockerGetFavouriteAssetIndicesResponse, FavouriteAssetIndicesResponse);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FUniversalAssetResponseDelegateBP, FLootLockerUniversalAssetsResponse, UniversalAssetsResponse);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FGrantAssetResponseDelegateBP, FLootLockerGrantAssetResponse, Response);
 
 DECLARE_DELEGATE_OneParam(FContextDelegate, FLootLockerGetContextResponse);
 DECLARE_DELEGATE_OneParam(FAssetsResponseDelegate, FLootLockerGetAssetsResponse);
 DECLARE_DELEGATE_OneParam(FAssetBonesResponseDelegate, FLootLockerGetAssetBonesResponse);
 DECLARE_DELEGATE_OneParam(FGetFavouriteAssetIndicesResponseDelegate, FLootLockerGetFavouriteAssetIndicesResponse);
 DECLARE_DELEGATE_OneParam(FUniversalAssetResponseDelegate, FLootLockerUniversalAssetsResponse);
+DECLARE_DELEGATE_OneParam(FGrantAssetResponseDelegate, FLootLockerGrantAssetResponse);
 
 /**
  *
@@ -396,6 +419,8 @@ public:
     static void RemoveAssetFromFavourites(int AssetId, const FGetFavouriteAssetIndicesResponseDelegateBP& OnCompletedRequestBP = FGetFavouriteAssetIndicesResponseDelegateBP(), const FGetFavouriteAssetIndicesResponseDelegate& OnCompletedRequest = FGetFavouriteAssetIndicesResponseDelegate());
 
 	static void GetUniversalAssets(int After, int Count, const FUniversalAssetResponseDelegateBP &OnCompletedRequestBP = FUniversalAssetResponseDelegateBP(), const FUniversalAssetResponseDelegate &OnCompletedRequest = FUniversalAssetResponseDelegate());
+
+    static void GrantAssetToPlayerInventory(const int assetID, const int assetVariationID, const int assetRentalOptionID, const FGrantAssetResponseDelegateBP& OnCompletedRequestBP = FGrantAssetResponseDelegateBP(), const FGrantAssetResponseDelegate& OnCompletedRequest = FGrantAssetResponseDelegate());
 
 public:
     ULootLockerAssetsRequestHandler();

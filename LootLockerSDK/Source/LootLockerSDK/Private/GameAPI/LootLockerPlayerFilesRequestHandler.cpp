@@ -23,7 +23,7 @@ void ULLPlayerFilesRequestHandler::UploadFile(const FLootLockerFileUploadRequest
 		{
 			// Add "public" to is_public field manually if it exists
             const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-			Response.IsPublic = JsonObject->GetBoolField("public");
+			Response.IsPublic = JsonObject->GetBoolField(TEXT("public"));
 		}
 	}));
 }
@@ -57,7 +57,7 @@ void ULLPlayerFilesRequestHandler::UpdateFile(const int32 FileId, const FLootLoc
 		{
 			// Add "public" to is_public field manually if it exists
 			const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-			Response.IsPublic = JsonObject->GetBoolField("public");
+			Response.IsPublic = JsonObject->GetBoolField(TEXT("public"));
 		}
 	}));
 }
@@ -87,7 +87,7 @@ void ULLPlayerFilesRequestHandler::ListFiles(const FLootLockerFileListBP &OnComp
         {
             // Add "public" to IsPublic field manually if it exists
             const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-            ParsePublicFlagOnFileList(Response.items, JsonObject->GetArrayField("items"));
+            ParsePublicFlagOnFileList(Response.items, JsonObject->GetArrayField(TEXT("items")));
         }
     }));
 }
@@ -100,7 +100,7 @@ void ULLPlayerFilesRequestHandler::ListOtherPlayersPublicFiles(const int32 Playe
         {
             // Add "public" to IsPublic field manually if it exists
             const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-            ParsePublicFlagOnFileList(Response.items, JsonObject->GetArrayField("items"));
+            ParsePublicFlagOnFileList(Response.items, JsonObject->GetArrayField(TEXT("items")));
         }
     }));
 }
@@ -113,7 +113,7 @@ void ULLPlayerFilesRequestHandler::GetSingleFile(const int32 FileID, const FLoot
         {
             // Add "public" to IsPublic field manually if it exists
             const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-            Response.IsPublic = JsonObject->GetBoolField("public");
+            Response.IsPublic = JsonObject->GetBoolField(TEXT("public"));
         }
     }));
 }
@@ -127,7 +127,7 @@ void ULLPlayerFilesRequestHandler::ParsePublicFlagOnFileList(TArray<FLootLockerP
 {
 	for (FLootLockerPlayerFile& Item : ParsedFilesList)
 	{
-		if (const TSharedPtr<FJsonValue>* MatchedItem = JsonFilesList.FindByPredicate([&Item](const TSharedPtr<FJsonValue> JsonItemValue)
+		if (const TSharedPtr<FJsonValue>* MatchedItem = JsonFilesList.FindByPredicate([&Item](const TSharedPtr<FJsonValue>& JsonItemValue)
 			{
 				if (!JsonItemValue || !JsonItemValue.IsValid())
 				{
@@ -135,14 +135,14 @@ void ULLPlayerFilesRequestHandler::ParsePublicFlagOnFileList(TArray<FLootLockerP
 				}
 				const TSharedPtr<FJsonObject>* JsonItemObject;
 				JsonItemValue->TryGetObject(JsonItemObject);
-				return JsonItemObject && JsonItemObject->Get()->GetIntegerField("id") == Item.id;
+				return JsonItemObject && JsonItemObject->Get()->GetIntegerField(TEXT("id")) == Item.id;
 			}))
 	    {
 			if (MatchedItem && MatchedItem->IsValid()) {
 				const TSharedPtr<FJsonObject>* MatchedItemObject;
 				MatchedItem->Get()->TryGetObject(MatchedItemObject);
 				if (MatchedItemObject && MatchedItemObject->IsValid()) {
-					Item.IsPublic = MatchedItemObject->Get()->GetBoolField("public");
+					Item.IsPublic = MatchedItemObject->Get()->GetBoolField(TEXT("public"));
 				}
 			}
 		}

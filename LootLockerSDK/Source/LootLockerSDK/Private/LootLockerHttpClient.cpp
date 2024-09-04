@@ -73,8 +73,8 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
 	Request->SetURL(endPoint);
 
 	Request->SetHeader(TEXT("User-Agent"), UserAgent);
-	Request->SetHeader(TEXT("User-Instance-Identifier"), UserInstanceIdentifier);
-    Request->SetHeader(TEXT("SDK-Version"), SDKVersion);
+	Request->SetHeader(TEXT("LL-Instance-Identifier"), UserInstanceIdentifier);
+    Request->SetHeader(TEXT("LL-SDK-Version"), SDKVersion);
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
     Request->SetHeader(TEXT("Accepts"), TEXT("application/json"));
 
@@ -96,6 +96,10 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
 		if (!response.success)
 		{
             FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
+            FString RetryAfterHeader = Response->GetHeader("retry-after");
+            if(!RetryAfterHeader.IsEmpty()) {
+                response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
+            }
             LogFailedRequestInformation(response, requestType, endPoint, data);
 		}
 		onCompleteRequest.ExecuteIfBound(response);
@@ -141,8 +145,8 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     FString Boundary = "lootlockerboundary";
 
 	Request->SetHeader(TEXT("User-Agent"), UserAgent);
-	Request->SetHeader(TEXT("User-Instance-Identifier"), UserInstanceIdentifier);
-    Request->SetHeader(TEXT("SDK-Version"), SDKVersion);
+	Request->SetHeader(TEXT("LL-Instance-Identifier"), UserInstanceIdentifier);
+    Request->SetHeader(TEXT("LL-SDK-Version"), SDKVersion);
 
     Request->SetHeader(TEXT("Content-Type"), TEXT("multipart/form-data; boundary=" + Boundary));
 
@@ -186,13 +190,16 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     Request->OnProcessRequestComplete().BindLambda([onCompleteRequest, this, requestType, endPoint](FHttpRequestPtr Req, const FHttpResponsePtr& Response, bool bWasSuccessful)
     {
         FLootLockerResponse response;
-
         response.success = ResponseIsValid(Response, bWasSuccessful);
         response.StatusCode = Response->GetResponseCode();
         response.FullTextFromServer = Response->GetContentAsString();
         if (!response.success)
         {
             FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
+            FString RetryAfterHeader = Response->GetHeader("retry-after");
+            if(!RetryAfterHeader.IsEmpty()) {
+               response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
+            }
             LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
         }
 

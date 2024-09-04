@@ -51,9 +51,15 @@ public:
     static FLootLockerEndPoints GuestloginEndpoint;
     static FLootLockerEndPoints MetaSessionEndpoint;
 
+    // Connected Accounts
+    static FLootLockerEndPoints ListConnectedAccountsEndpoint;
+    static FLootLockerEndPoints DisconnectAccountEndpoint;
+    static FLootLockerEndPoints ConnectProviderToAccountEndpoint;
+
     // Remote Sessions
-    static FLootLockerEndPoints LeaseRemoteSession;
-    static FLootLockerEndPoints StartRemoteSession;
+    static FLootLockerEndPoints LeaseRemoteSessionEndpoint;
+    static FLootLockerEndPoints StartRemoteSessionEndpoint;
+    static FLootLockerEndPoints RefreshRemoteSessionEndpoint;
 
     // White Label
     static FLootLockerEndPoints WhiteLabelSignupEndpoint;
@@ -152,6 +158,7 @@ public:
     static FLootLockerEndPoints AddAssetToFavouritesEndpoint;
     static FLootLockerEndPoints RemoveAssetFromFavouritesEndpoint;
     static FLootLockerEndPoints GetUniversalAssetsEndpoint;
+    static FLootLockerEndPoints GrantAssetToPlayerInventory;
 
     //Asset Instances
     static FLootLockerEndPoints GetAllKeyValuePairsForAssetInstance;
@@ -163,6 +170,7 @@ public:
     static FLootLockerEndPoints DeleteAKeyValuePairByIdForAssetInstanceEndpoint;
     static FLootLockerEndPoints InspectLootBoxEndpoint;
     static FLootLockerEndPoints OpenLootBoxEndpoint;
+    static FLootLockerEndPoints DeleteAssetInstanceFromPlayerInventory;
 
     //Instance Progressions
     static FLootLockerEndPoints GetAllInstanceProgressions;
@@ -197,7 +205,14 @@ public:
     static FLootLockerEndPoints PollingOrderStatusEndpoint;
     static FLootLockerEndPoints ActivateRentalAssetEndpoint;
     static FLootLockerEndPoints GetOrderDetailsEndpoint;
+
     static FLootLockerEndPoints PurchaseCatalogItem;
+    static FLootLockerEndPoints RedeemAppleAppStorePurchase;
+    static FLootLockerEndPoints RedeemGooglePlayStorePurchase;
+
+    static FLootLockerEndPoints BeginSteamPurchaseRedemption;
+    static FLootLockerEndPoints QuerySteamPurchaseRedemptionStatus;
+    static FLootLockerEndPoints FinalizeSteamPurchaseRedemption;
 
     //Trigger Events
     static FLootLockerEndPoints TriggerEventEndpoint;
@@ -217,6 +232,9 @@ public:
     static FLootLockerEndPoints GetScoreListAfter;
     static FLootLockerEndPoints SubmitScore;
     static FLootLockerEndPoints GetAllMemberRanks;
+    static FLootLockerEndPoints ListLeaderboardArchive;
+    static FLootLockerEndPoints GetLeaderboardArchive;
+    static FLootLockerEndPoints GetLeaderboardDetails;
 
     //Progressions
     static FLootLockerEndPoints GetAllProgressions;
@@ -243,13 +261,21 @@ public:
     static FLootLockerEndPoints ListCatalogs;
     static FLootLockerEndPoints ListCatalogItemsByKey;
 
+    // Entitlements
+    static FLootLockerEndPoints ListEntitlements;
+    static FLootLockerEndPoints GetEntitlement;
+
     // Miscellaneous
     static FLootLockerEndPoints GetServerTimeEndpoint;
 
     // Crash
     static FLootLockerEndPoints Crashes;
+
+    // Feedback
+    static FLootLockerEndPoints ListFeedbackCategories;
+    static FLootLockerEndPoints SendFeedback;
+
 private:
     static FString GameBaseUrl;
-
     static FLootLockerEndPoints InitEndpoint(const FString& Endpoint, ELootLockerHTTPMethod Method);
 };

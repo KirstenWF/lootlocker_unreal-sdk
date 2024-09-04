@@ -10,10 +10,13 @@
 #include "GameAPI/LootLockerCatalogRequestHandler.h"
 #include "GameAPI/LootLockerCharacterRequestHandler.h"
 #include "GameAPI/LootLockerCollectablesRequestHandler.h"
+#include "GameAPI/LootLockerConnectedAccountsRequestHandler.h"
 #include "GameAPI/LootLockerCurrencyRequestHandler.h"
 #include "GameAPI/LootLockerDropTablesRequestHandler.h"
+#include "GameAPI/LootLockerEntitlementRequestHandler.h"
 #include "GameAPI/LootLockerHeroRequestHandler.h"
 #include "GameAPI/LootLockerLeaderboardRequestHandler.h"
+#include "GameAPI/LootLockerLeaderboardArchiveRequestHandler.h"
 #include "GameAPI/LootLockerMapsRequestHandler.h"
 #include "GameAPI/LootLockerMessagesRequestHandler.h"
 #include "GameAPI/LootLockerMiscellaneousRequestHandler.h"
@@ -26,7 +29,7 @@
 #include "GameAPI/LootLockerRemoteSessionRequestHandler.h"
 #include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
 #include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
-
+#include "GameAPI/LootLockerFeedbackRequestHandler.h"
 #include "LootLockerSDKManager.generated.h"
 
 UCLASS(Blueprintable)
@@ -71,7 +74,21 @@ public:
     static void StartAmazonLunaSession(const FString& AmazonLunaGuid, const FLootLockerSessionResponse& OnCompletedRequest);
 
     /**
+     * Verify a Steam user and then start a session for that user
+     * You can optionally specify a steam app id if you have multiple ones for your game and have configured this in the LootLocker console
+     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * https://ref.lootlocker.io/game-api/#authentication-request
+     *
+     * @param SteamId64 The Steam 64 bit Id as an FString
+     * @param PlatformToken Platform-specific token.
+     * @param OnCompletedRequest Delegate for handling the server response.
+     * @param SteamAppId (Optional) The specific Steam App Id to verify the player for
+     */
+    static void VerifyPlayerAndStartSteamSession(const FString& SteamId64, const FString& PlatformToken, const FLootLockerSessionResponse& OnCompletedRequest, const int SteamAppId = -1);
+
+    /**
      * Start a session for a Steam user
+     * Note: Steam requires that you verify the player before starting a steam session. See the method VerifyPlayer
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
      * https://ref.lootlocker.io/game-api/#authentication-request
      *
@@ -295,7 +312,7 @@ public:
      * @param OnCompletedRequest Response Delegate to handle the response
      * @param Platform Optional parameter to call explicitly for a specific platform
      */
-    static void VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompletedRequest, const FString Platform = FString(TEXT("")));
+    static void VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompletedRequest, const FString& Platform = FString(TEXT("")));
 
     /**
      * End active session (if any exists)
@@ -306,6 +323,51 @@ public:
      * @param OnCompletedRequest Delegate for handling the response of type LootLockerSessionResponse
      */
     static void EndSession(const FLootLockerDefaultDelegate& OnCompletedRequest);
+
+    //==================================================
+    // Connected Accounts
+    //==================================================
+    /**
+     * List identity providers (like Apple, Google, etc.) that are connected to the currently logged in account
+     *
+     * @param OnComplete Delegate for handling the response
+     */
+    static void ListConnectedAccounts(const FLootLockerListConnectedAccountsResponseDelegate& OnComplete);
+
+    /**
+     * Disconnect account from the currently logged in account
+     *
+     * Use this to disconnect an account (like a Google or Apple account) that can be used to start sessions for this LootLocker account so that it is no longer allowed to do that
+     *
+     * @param AccountToDisconnect What account to disconnect from this LootLocker Account
+     * @param OnComplete Delegate for handling the response
+     */
+    static void DisconnectAccount(const ELootLockerAccountProvider AccountToDisconnect, const FLootLockerDefaultDelegate& OnComplete);
+
+    /**
+     * Connect a Google Account to the currently logged in LootLocker account allowing that google account to start sessions for this player
+     *
+     * @param IdToken The Id Token from google sign in
+     * @param OnComplete Delegate for handling the response
+     */
+    static void ConnectGoogleAccount(const FString& IdToken, const FLootLockerAccountConnectedResponseDelegate& OnComplete);
+
+    /**
+     * Connect a Google Account (with a Google Platform specified) to the currently logged in LootLocker account allowing that google account to start sessions for this player
+     *
+     * @param IdToken The Id Token from google sign in
+     * @param Platform Google OAuth2 ClientID platform
+     * @param OnComplete Delegate for handling the response
+     */
+    static void ConnectGoogleAccount(const FString& IdToken, EGoogleAccountProviderPlatform Platform, const FLootLockerAccountConnectedResponseDelegate& OnComplete);
+
+    /**
+     * Connect an Apple Account (authorized by Rest Sign In) to the currently logged in LootLocker account allowing that google account to start sessions for this player
+     *
+     * @param AuthorizationCode Authorization code, provided by apple during Sign In
+     * @param OnComplete Delegate for handling the response
+     */
+    static void ConnectAppleAccountByRestSignIn(const FString& AuthorizationCode, const FLootLockerAccountConnectedResponseDelegate& OnComplete);
 
     //==================================================
     // Remote Sessions
@@ -331,6 +393,24 @@ public:
      * @param ProcessID The id of the remote session process that you want to cancel
      */
     static void CancelRemoteSessionProcess(const FString& ProcessID);
+
+    /**
+     * Refresh a previous session signed in remotely
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+     *
+     * @param OnCompletedRequest Delegate for handling the response
+     */
+    static void RefreshRemoteSession(const FLootLockerRefreshRemoteSessionResponseDelegate& OnCompletedRequest) { RefreshRemoteSession("", OnCompletedRequest); };
+
+    /**
+     * Refresh a previous session signed in remotely
+     * If you do not want to manually handle the refresh token we recommend using the RefreshRemoteSession(const FLootLockerRefreshRemoteSessionResponseDelegate& OnCompletedRequest) method.
+     * A response code of 401 (Unauthorized) means the refresh token has expired and you'll need to sign in again
+     *
+     * @param RefreshToken Token received in response from StartRemoteSession request
+     * @param OnCompletedRequest Delegate for handling the response
+     */
+    static void RefreshRemoteSession(const FString& RefreshToken, const FLootLockerRefreshRemoteSessionResponseDelegate& OnCompletedRequest);
 
     //==================================================
     // White Label
@@ -1290,6 +1370,29 @@ public:
      */
     static void RemoveAssetFromFavourites(int AssetId, const FGetFavouriteAssetIndicesResponseDelegate& OnCompletedRequest);
 
+    /**
+    * Grant an asset to the current Player.
+    * https://ref.lootlocker.com/game-api/#grant-an-asset-to-the-player
+    *
+    * @param AssetID ID of the asset to be granted
+    * @param AssetVariationID The ID of the Asset Variation you want to grant
+    * @param AssetRentalOptionID The ID of the rental option you want to grant
+    */
+    static void GrantAssetToPlayerInventory(const int AssetID, const int AssetVariationID, const int AssetRentalOptionID, const FGrantAssetResponseDelegate& OnCompletedRequest);
+
+    /**
+    * Grant an asset to the current Player.
+    * https://ref.lootlocker.com/game-api/#grant-an-asset-to-the-player
+    *
+    * @param AssetID ID of the asset to be granted
+    * @param AssetVariationID The ID of the Asset Variation you want to grant
+    * @param AssetRentalOptionID The ID of the rental option you want to grant
+    */
+    static void GrantAssetToPlayerInventory(const int AssetID, const FGrantAssetResponseDelegate& OnCompletedRequest) {
+        GrantAssetToPlayerInventory(AssetID, 0, 0, OnCompletedRequest);
+    }
+
+
     //==================================================
     //Asset Instances
     // https://ref.lootlocker.com/game-api/#asset-instances
@@ -1373,6 +1476,15 @@ public:
      * @param OnCompletedRequest Delegate for handling the server response.
      */
     static void OpenLootBox(int AssetInstanceId, const FOpenLootBoxResponseDelegate& OnCompletedRequest);
+
+    /**
+    * Delete an Asset Instance permanently from the active Player's Inventory.
+    *
+    * @param AssetInstanceID asset instance ID.
+    * @param OnCompletedRequest Delegate for handling the server response.
+    */
+    static void DeleteAssetInstanceFromPlayerInventory(int AssetInstanceID, const FDeleteAssetInstanceResponseDelegate& OnCompletedRequest);
+
 
     //==================================================
     //User Generated Content
@@ -1574,6 +1686,7 @@ public:
      * @param PurchaseData Data about the assets to be purchased.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
+    [[deprecated("This purchasing system has been replaced with our new IAP system and will be removed at a later stage. Read more here: https://docs.lootlocker.com/content/in-app-purchases")]]
     static void PurchaseAssets(const TArray<FLootLockerAssetPurchaseData>& PurchaseData, const FPurchaseResponseDelegate& OnCompletedRequest);
 
     /**
@@ -1583,6 +1696,7 @@ public:
      * @param PurchaseData Data about the assets to be purchased.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
+    [[deprecated("This purchasing system has been replaced with our new IAP system and will be removed at a later stage. Read more here: https://docs.lootlocker.com/content/in-app-purchases")]]
     static void PurchaseAssetsAndroid(const TArray<FLootLockerAndroidAssetPurchaseData>& PurchaseData, const FPurchaseResponseDelegate& OnCompletedRequest);
 
     /**
@@ -1592,6 +1706,7 @@ public:
      * @param PurchaseData data about the assets to be purchased.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
+    [[deprecated("This purchasing system has been replaced with our new IAP system and will be removed at a later stage. Read more here: https://docs.lootlocker.com/content/in-app-purchases")]]
     static void PurchaseAssetsIOS(const TArray<FLootLockerVerifyPurchaseIosData>& PurchaseData, const FPurchaseResponseDelegate& OnCompletedRequest);
 
     /**
@@ -1602,6 +1717,7 @@ public:
      * @param PurchaseId ID of the purchase order.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
+    [[deprecated("This purchasing system has been replaced with our new IAP system and will be removed at a later stage. Read more here: https://docs.lootlocker.com/content/in-app-purchases")]]
     static void PollingOrderStatus(int PurchaseId, const FPurchaseStatusResponseDelegate& OnCompletedRequest);
 
     /**
@@ -1622,7 +1738,17 @@ public:
      * @param NoProducts Set to true if you do not want products in the order returned in the response.
      * @param OnCompletedRequest Delegate for handling the server response.
      */
+    [[deprecated("This purchasing system has been replaced with our new IAP system and will be removed at a later stage. Read more here: https://docs.lootlocker.com/content/in-app-purchases")]]
     static void GetOrderDetails(int32 OrderId, const bool NoProducts, const FOrderStatusDetailsDelegate& OnCompletedRequest);
+
+    /**
+     * Purchase one catalog item using a specified wallet
+     *
+     * @param WalletId The id of the wallet to use for the purchase
+     * @param CatalogItemListingId The unique listing id of the catalog item to purchase
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void LootLockerPurchaseSingleCatalogItem(const FString& WalletId, const FString& CatalogItemListingId, const FLootLockerDefaultDelegate& OnCompletedRequest);
 
     /**
      * Purchase one or more catalog items using a specified wallet
@@ -1632,6 +1758,97 @@ public:
      * @param OnCompletedRequest Delegate for handling the server response
      */
     static void LootLockerPurchaseCatalogItems(const FString& WalletId, const TArray<FLootLockerCatalogItemAndQuantityPair> ItemsToPurchase, const FLootLockerDefaultDelegate& OnCompletedRequest);
+
+    /**
+     * Redeem a purchase that was made successfully towards the Apple App Store for the current player
+     *
+     * @param TransactionId The id of the transaction successfully made towards the Apple App Store
+     * @param Sandboxed Optional: Should this redemption be made towards sandbox App Store
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void RedeemAppleAppStorePurchaseForPlayer(const FString& TransactionId, const FLootLockerDefaultDelegate& OnCompletedRequest, bool Sandboxed = false);
+
+    /**
+     * Redeem a purchase that was made successfully towards the Apple App Store for a class that the current player owns
+     *
+     * @param TransactionId The id of the transaction successfully made towards the Apple App Store
+     * @param ClassId The id of the class to redeem this transaction for
+     * @param Sandboxed Optional: Should this redemption be made towards sandbox App Store
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void RedeemAppleAppStorePurchaseForClass(const int ClassId, const FString& TransactionId, const FLootLockerDefaultDelegate& OnCompletedRequest, bool Sandboxed = false);
+
+    /**
+     * Redeem a purchase that was made successfully towards the Google Play Store for the current player
+     *
+     * @param ProductId The id of the product that this redemption refers to
+     * @param PurchaseToken The token from the purchase successfully made towards the Google Play Store
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void RedeemGooglePlayStorePurchaseForPlayer(const FString& ProductId, const FString& PurchaseToken, const FLootLockerDefaultDelegate& OnCompletedRequest);
+
+    /**
+     * Redeem a purchase that was made successfully towards the Google Play Store for a class that the current player owns
+     *
+     * @param ClassId The id of the class to redeem this purchase for
+     * @param ProductId The id of the product that this redemption refers to
+     * @param PurchaseToken The token from the purchase successfully made towards the Google Play Store
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void RedeemGooglePlayStorePurchaseForClass(const int ClassId, const FString& ProductId, const FString& PurchaseToken, const FLootLockerDefaultDelegate& OnCompletedRequest);
+
+    /**
+     * Begin a Steam purchase with the given settings that when finalized will redeem the specified catalog item
+     *
+     * Steam in-app purchases need to be configured for this to work
+     * Steam in-app purchases works slightly different from other platforms, you begin a purchase with this call which initiates it in Steams backend
+     * While your app is waiting for the user to finalize that purchase you can use QuerySteamPurchaseRedemptionStatus to get the status, when that tells you that the purchase is Approved you can finalize the purchase using FinalizeSteamPurchaseRedemption
+     *
+     * @param SteamId Id of the Steam User that is making the purchase
+     * @param Currency The currency to use for the purchase
+     * @param Language The language to use for the purchase
+     * @param CatalogItemId The LootLocker Catalog Item Id for the item you wish to purchase
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void BeginSteamPurchaseRedemption(const FString& SteamId, const FString& Currency, const FString& Language, const FString& CatalogItemId, const FLootLockerBeginSteamPurchaseRedemptionDelegate& OnCompletedRequest);
+
+    /**
+     * Begin a Steam purchase with the given settings that when finalized will redeem the specified catalog item for the specified class
+     *
+     * Steam in-app purchases need to be configured for this to work
+     * Steam in-app purchases works slightly different from other platforms, you begin a purchase with this call which initiates it in Steams backend
+     * While your app is waiting for the user to finalize that purchase you can use QuerySteamPurchaseRedemptionStatus to get the status, when that tells you that the purchase is Approved you can finalize the purchase using FinalizeSteamPurchaseRedemption
+     *
+     * @param ClassId Id of the class to make the purchase for
+     * @param SteamId Id of the Steam User that is making the purchase
+     * @param Currency The currency to use for the purchase
+     * @param Language The language to use for the purchase
+     * @param CatalogItemId The LootLocker Catalog Item Id for the item you wish to purchase
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void BeginSteamPurchaseRedemptionForClass(const int ClassId, const FString& SteamId, const FString& Currency, const FString& Language, const FString& CatalogItemId, const FLootLockerBeginSteamPurchaseRedemptionDelegate& OnCompletedRequest);
+
+    /**
+     * Check the Steam Purchase status for a given entitlement
+     *
+     * Use this to check the status of an ongoing purchase to know when it's ready to finalize or has been aborted
+     * or use this to get information for a completed purchase
+     *
+     * @param EntitlementId The id of the entitlement to check the status for
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void QuerySteamPurchaseRedemptionStatus(const FString& EntitlementId, const FLootLockerQuerySteamPurchaseRedemptionStatusDelegate& OnCompletedRequest);
+
+    /**
+     * Finalize a started Steam Purchase and subsequently redeem the catalog items that the entitlement refers to
+     *
+     * The steam purchase needs to be in status Approved for this call to work
+     *
+     * @param EntitlementId The id of the entitlement to finalize the purchase for
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    static void FinalizeSteamPurchaseRedemption(const FString& EntitlementId, const FLootLockerDefaultDelegate& OnCompletedRequest);
+
 
     //==================================================
     //Trigger Events
@@ -1761,7 +1978,37 @@ public:
      * @param OnCompletedRequest Delegate for handling the server response
      */
     static void GetAllMemberRanks(FString MemberId, const int Count, const int After, const FLootLockerGetAllMemberRanksResponseDelegate& OnCompletedRequest);
-	
+    
+    /**
+    * List the archive of a specific Leaderboard,
+    * @param LeaderboardKey the Key of the Leaderboard you want the list of archives
+    * @param OnCompletedRequestBP Delegate for handling the server response
+    */
+    static void ListLeaderboardArchive(const FString& LeaderboardKey, const FLootLockerLeaderboardArchiveResponseDelegate& OnCompletedRequest);
+    
+    /**
+    * Get the specified Archive which includes details such as ranks, scores and rewards.
+    * @param Key the Key of the Leaderboard you want the list of archives
+    * @param Count Optional: the count of how many archive entries you want
+    * @param After Optional: cursor for pagination
+    * @param OnCompletedRequest Delegate for handling the server response
+    */
+    static void GetLeaderboardArchive(const FString& Key, int Count, const FString& After, const FLootLockerLeaderboardArchiveDetailResponseDelegate& OnCompletedRequest);
+
+    /**
+    * Get the specified Archive which includes details such as ranks, scores and rewards.
+    * @param Key the Key of the Leaderboard you want the list of archives
+    * @param OnCompletedRequest Delegate for handling the server response
+    */
+    static void GetLeaderboardArchive(const FString& Key, const FLootLockerLeaderboardArchiveDetailResponseDelegate& OnCompletedRequest) { GetLeaderboardArchive(Key, -1, "", OnCompletedRequest); }
+
+    /**
+    * Get details on a Leaderboard which contains the schedule, rewards and the details on rewards.
+    * @param LeaderboardKey the Key of the Leaderboard you want the list of archives
+    * @param OnCompletedRequest Delegate for handling the server response
+    */
+    static void GetLeaderboardDetails(const FString& LeaderboardKey, const FLootLockerLeaderboardDetailsResponseDelegate& OnCompletedRequest);
+
     //==================================================
     // Drop Table
     // https://ref.lootlocker.com/game-api/#drop-tables
@@ -1872,7 +2119,7 @@ public:
      * List the items available in a specific catalog
      *
      * @param CatalogKey Unique Key of the catalog that you want to get items for
-     * @param Count Optional: Amount of catalog items to receive. Use null to simply get the default amount.
+     * @param Count Optional: Amount of catalog items to receive. Use null to get the default amount.
      * @param After Optional: Used for pagination, this is the cursor to start getting items from. Use null to get items from the beginning. Use the cursor from a previous call to get the next count of items in the list.
      * @param OnComplete Delegate for handling the server response
      */
@@ -1886,6 +2133,84 @@ public:
      */
     static void ListCatalogItems(const FString& CatalogKey, const FLootLockerListCatalogPricesResponseDelegate& OnComplete) { ListCatalogItems(CatalogKey, -1, "", OnComplete);  }
 
+    //==================================================
+    // Entitlements
+    //==================================================
+
+    /**
+     * List this player's historical entitlements
+     * Use this to retrieve information on entitlements the player has received regardless of their origin (for example as an effect of progression, purchases, or leaderboard rewards)
+     *
+     * @param Count Optional: Amount of entitlement listings to receive. Use null to get the default amount.
+     * @param After Optional: Used for pagination, this is the cursor to start getting items from. Use null to get items from the beginning. Use the cursor from a previous call to get the next count of items in the list.
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void ListEntitlements(int Count, const FString& After, const FLootLockerListEntitlementsResponseDelegate& OnComplete);
+
+    /**
+     * List this player's historical entitlements
+     * Use this to retrieve information on entitlements the player has received regardless of their origin (for example as an effect of progression, purchases, or leaderboard rewards)
+     *
+     * @param OnComplete Delegate for handling the server response
+     */
+    static void ListEntitlements(const FLootLockerListEntitlementsResponseDelegate& OnComplete) { ListEntitlements(-1, "", OnComplete); }
+    
+    /**
+    * Get information of an entitlement
+    * Use this to retrieve information on entitlements the player has received regardless of their origin (for example as an effect of progression, purchases, or leaderboard rewards) 
+    *
+    * @param EntitlementID: Is the identifying ID which the entitlement is connected to
+    * @param OnCompelte delegate for handling the server response
+    */
+    static void GetEntitlement(const FString& EntitlementID, FLootLockerSingleEntitlementResponseDelegate& OnComplete);
+
+    //==================================================
+    //Feedback
+    //==================================================
+
+    /**
+    * Get a list of Categories to use for feedback to players, like reporting or giving feedback such as nice notes
+    * @param OnComplete delegate for handling the server response
+    */
+    static void ListPlayerFeedbackCategories(const FLootLockerListFeedbackCategoryResponseDelegate& OnComplete);
+
+    /**
+    * Get a list of Categories to use for feedback to the game, like reporting or giving feedback such as nice notes
+    * @param OnComplete delegate for handling the server response
+    */
+    static void ListGameFeedbackCategories(const FLootLockerListFeedbackCategoryResponseDelegate& OnComplete);
+
+    /**
+    * Get a list of Categories to use for feedback to a ugc asset, like reporting or giving feedback such as nice notes
+    * @param OnComplete delegate for handling the server response
+    */
+    static void ListUGCFeedbackCategories(const FLootLockerListFeedbackCategoryResponseDelegate& OnComplete);
+
+    /**
+    * Send feedback about a player
+    * @param Ulid is the ulid of who you're giving feedback about
+    * @param Description is the text/reason of your feedback ("He is hacking", "He is a kind player!")
+    * @param CategoryID is the ID of the category you're using for your feedback, use ListFeedbackCategories function to get the ids.
+    */
+    static void SendPlayerFeedback(const FString& Ulid, const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseDelegate& OnComplete);
+
+    /**
+    * Send feedback about the game
+    * @param Ulid is the ulid of who you're giving feedback about
+    * @param Description is the text/reason of your feedback ("Amazing game", "I found a bug here!")
+    * @param CategoryID is the ID of the category you're using for your feedback, use ListFeedbackCategories function to get the ids.
+    */
+    static void SendGameFeedback(const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseDelegate& OnComplete);
+
+    /**
+    * Send feedback about a ugc asset
+    * @param Ulid is the ulid of the asset you're giving feedback about
+    * @param Description is the text/reason of your feedback ("Amazing Level", "I found a bug here!")
+    * @param CategoryID is the ID of the category you're using for your feedback, use ListFeedbackCategories function to get the ids.
+    */
+    static void SendUGCFeedback(const FString& Ulid, const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseDelegate& OnComplete);
+
+
 	//==================================================
 	//Miscellaneous
 	//==================================================
@@ -1894,7 +2219,9 @@ public:
 	* Get the current time of the server. Can also be used to ping the server
 	* https://ref.lootlocker.com/game-api/#server-time
 	*
-	* @param OnCompletedRequest Delegate for handling the server response.
+	* @param OnCompleted
+    
+    Delegate for handling the server response.
 	*/
 	static void GetServerTime(const FTimeResponseDelegate& OnCompletedRequest);
 
