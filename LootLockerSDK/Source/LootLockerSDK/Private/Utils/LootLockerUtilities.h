@@ -229,33 +229,4 @@ struct LLAPI
 		// send request
 		HttpClient->UploadRawData(EndpointWithArguments, RequestMethod, RawData, FileName, AdditionalData, SessionResponse, CustomHeaders);
 	}
-
-    template<typename BluePrintDelegate , typename CppDelegate>
-    static void CallAPIUsingRawJSON(ULootLockerHttpClient* HttpClient, FString& ContentString, FLootLockerEndPoints Endpoint, const TArray<FStringFormatArg>& InOrderedArguments, const TMultiMap<FString, FString> QueryParams, const BluePrintDelegate& OnCompletedRequestBP, const CppDelegate& OnCompletedRequest, const FResponseInspectorCallback& ResponseInspectorCallback = LLAPI<ResponseType>::FResponseInspectorCallback::CreateLambda([](const ResponseType& Ignored) {}), TMap<FString, FString> CustomHeaders = TMap<FString, FString>())
-    {
-        
-        // calculate endpoint
-        const ULootLockerConfig* Config = GetDefault<ULootLockerConfig>();
-        FString EndpointWithArguments = FString::Format(*Endpoint.endpoint, FStringFormatNamedArguments{ {"domainKey", Config && !Config->DomainKey.IsEmpty() ? Config->DomainKey + "." : ""} });
-        EndpointWithArguments = FString::Format(*EndpointWithArguments, InOrderedArguments);
-
-        if (QueryParams.Num() != 0)
-        {
-            FString Delimiter = "?";
-            for (const TPair<FString, FString>& Pair : QueryParams)
-            {
-                EndpointWithArguments = EndpointWithArguments + Delimiter + Pair.Key + "=" + Pair.Value;
-                Delimiter = "&";
-            }
-        }
-        
-        const FString RequestMethod = ULootLockerEnumUtils::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
-        CustomHeaders.Add(TEXT("x-session-token"), ULootLockerStateData::GetToken());
-
-        // create callback lambda
-        const FResponseCallback SessionResponse = CreateLambda<BluePrintDelegate, CppDelegate>(OnCompletedRequestBP, OnCompletedRequest, ResponseInspectorCallback);
-    
-        // send request
-        HttpClient->SendApi(EndpointWithArguments, RequestMethod, ContentString, SessionResponse, CustomHeaders);
-    }
 };

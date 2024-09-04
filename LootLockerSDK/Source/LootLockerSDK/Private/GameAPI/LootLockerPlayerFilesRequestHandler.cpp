@@ -44,7 +44,7 @@ void ULLPlayerFilesRequestHandler::UploadRawFile(const FLootLockerRawFileUploadR
 		{
 			// Add "public" to is_public field manually if it exists
             const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-			Response.IsPublic = JsonObject->GetBoolField("public");
+			Response.IsPublic = JsonObject->GetBoolField(TEXT("public"));
 		}
 	}));
 }
@@ -74,7 +74,7 @@ void ULLPlayerFilesRequestHandler::UpdateRawFile(const int32 FileId, const FLoot
 		{
 			// Add "public" to is_public field manually if it exists
 			const TSharedPtr<FJsonObject> JsonObject = LootLockerUtilities::JsonObjectFromFString(Response.FullTextFromServer);
-			Response.IsPublic = JsonObject->GetBoolField("public");
+			Response.IsPublic = JsonObject->GetBoolField(TEXT("public"));
 		}
 	}));
 }
