@@ -91,16 +91,20 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
 		FLootLockerResponse response;
         
         response.success = ResponseIsValid(Response, bWasSuccessful);
-        response.StatusCode = Response->GetResponseCode();
-		response.FullTextFromServer = Response->GetContentAsString();
-		if (!response.success)
+		if (Response != nullptr)
 		{
-            FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
-            FString RetryAfterHeader = Response->GetHeader("retry-after");
-            if(!RetryAfterHeader.IsEmpty()) {
-                response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
-            }
-            LogFailedRequestInformation(response, requestType, endPoint, data);
+			response.StatusCode = Response->GetResponseCode();
+			response.FullTextFromServer = Response->GetContentAsString();
+			if (!response.success)
+			{
+				FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
+				FString RetryAfterHeader = Response->GetHeader("retry-after");
+				if (!RetryAfterHeader.IsEmpty())
+				{
+					response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
+				}
+				LogFailedRequestInformation(response, requestType, endPoint, data);
+			}
 		}
 		onCompleteRequest.ExecuteIfBound(response);
 	});
