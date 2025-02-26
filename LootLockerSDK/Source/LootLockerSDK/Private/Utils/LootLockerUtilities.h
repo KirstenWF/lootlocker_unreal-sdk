@@ -15,10 +15,6 @@ constexpr FLootLockerEmptyRequest LootLockerEmptyRequest;
 
 const TMultiMap<FString,FString> EmptyQueryParams;
 
-#if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION <= 25
-typedef TMap<FString, FStringFormatArg> FStringFormatNamedArguments;
-#endif
-
 struct FObfuscationDetails
 {
     FString key;
@@ -76,7 +72,11 @@ namespace LootLockerUtilities
 
     FString FStringFromJsonObject(const TSharedPtr<FJsonObject>& JsonObject);
 
+    FString FStringFromJsonArray(const TArray<TSharedPtr<FJsonValue>>& JsonArray);
+
     TSharedPtr<FJsonObject> JsonObjectFromFString(const FString& JsonString);
+
+    bool JsonArrayFromFString(const FString& JsonString, TArray<TSharedPtr<FJsonValue>>& JsonArrayOutput);
 
     FString ObfuscateJsonStringForLogging(const FString& JsonBody);
 
@@ -157,7 +157,11 @@ struct LLAPI
         const ULootLockerConfig* Config = GetDefault<ULootLockerConfig>();
         FString EndpointWithArguments = FString::Format(*Endpoint.endpoint, FStringFormatNamedArguments{ {"domainKey", Config && !Config->DomainKey.IsEmpty() ? Config->DomainKey + "." : ""} });
         EndpointWithArguments = FString::Format(*EndpointWithArguments, InOrderedArguments);
-        CustomHeaders.Add(TEXT("x-session-token"), ULootLockerStateData::GetToken());
+        const FString& Token = ULootLockerStateData::GetToken();
+        if (!Token.IsEmpty())
+        {
+            CustomHeaders.Add(TEXT("x-session-token"), Token);	        
+        }
 
         if (QueryParams.Num() != 0)
         {
@@ -193,7 +197,11 @@ struct LLAPI
         EndpointWithArguments = FString::Format(*EndpointWithArguments, InOrderedArguments);
         
         const FString RequestMethod = ULootLockerEnumUtils::GetEnum(TEXT("ELootLockerHTTPMethod"), static_cast<int32>(Endpoint.requestMethod));
-        CustomHeaders.Add(TEXT("x-session-token"), ULootLockerStateData::GetToken());
+        const FString& Token = ULootLockerStateData::GetToken();
+        if (!Token.IsEmpty())
+        {
+            CustomHeaders.Add(TEXT("x-session-token"), Token);
+        }
 
 #if WITH_EDITOR
         UE_LOG(LogLootLockerGameSDK, Log, TEXT("Request:"));

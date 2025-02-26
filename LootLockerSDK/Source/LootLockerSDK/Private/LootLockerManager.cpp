@@ -4,6 +4,7 @@
 
 #include "LootLockerPlatformManager.h"
 #include "GameAPI/LootLockerCatalogRequestHandler.h"
+#include "GameAPI/LootLockerMetadataRequestHandler.h"
 #include "GameAPI/LootLockerMiscellaneousRequestHandler.h"
 
 void ULootLockerManager::StartPlaystationNetworkSession(const FString& PsnOnlineId, const FAuthResponseBP& OnStartedSessionRequestCompleted)
@@ -37,6 +38,11 @@ void ULootLockerManager::VerifyPlayerAndStartSteamSession(const FString& SteamId
         }
         StartSteamSession(SteamId64, OnCompletedRequest);
     }));
+}
+
+void ULootLockerManager::StartSteamSessionUsingTicket(const FString& SteamSessionTicket, const FString& SteamAppId, const FAuthResponseBP& OnCompletedRequest)
+{
+    ULootLockerAuthenticationRequestHandler::StartSteamSession(SteamSessionTicket, SteamAppId, OnCompletedRequest);
 }
 
 void ULootLockerManager::StartSteamSession(const FString& SteamId64, const FAuthResponseBP& OnStartedSessionRequestCompleted)
@@ -208,6 +214,19 @@ void ULootLockerManager::CancelRemoteSessionProcess(FString ProcessID)
 void ULootLockerManager::RefreshRemoteSession(const FString& RefreshToken, const FLootLockerRefreshRemoteSessionResponseDelegateBP& OnCompletedRequest)
 {
     ULootLockerRemoteSessionRequestHandler::RefreshRemoteSession(RefreshToken, OnCompletedRequest);
+}
+
+//==================================================
+// Player
+//==================================================
+void ULootLockerManager::GetCurrentPlayerInfo(const FLootLockerGetCurrentPlayerInfoResponseBP& OnCompletedRequest)
+{
+    ULootLockerPlayerRequestHandler::GetCurrentPlayerInfo(OnCompletedRequest);
+}
+
+void ULootLockerManager::ListPlayerInfo(TArray<FString> PlayerIdsToLookUp, TArray<int> PlayerLegacyIdsToLookUp, TArray<FString> PlayerPublicUidsToLookUp, const FLootLockerListPlayerInfoResponseBP& OnCompletedRequest)
+{
+    ULootLockerPlayerRequestHandler::ListPlayerInfo(PlayerIdsToLookUp, PlayerLegacyIdsToLookUp, PlayerPublicUidsToLookUp, OnCompletedRequest);
 }
 
 void ULootLockerManager::GetPlayerInfo(const FPInfoResponseBP& OnGetPlayerInfoRequestComplete)
@@ -678,6 +697,11 @@ void ULootLockerManager::CreateAssetCandidate(const FLootLockerCreateAssetCandid
     ULootLockerUserGeneratedContentRequestHandler::CreateAssetCandidate(AssetCandidateData, OnCreateAssetCandidateCompleted);
 }
 
+void ULootLockerManager::CreateAssetCandidateAndMarkComplete(const FLootLockerCreateAssetCandidateData& AssetCandidateData, const FCreateAssetCandidateResponseDelegateBP& OnCreateAssetCandidateCompleted)
+{
+    ULootLockerUserGeneratedContentRequestHandler::CreateAssetCandidateAndMarkComplete(AssetCandidateData, OnCreateAssetCandidateCompleted);
+}
+
 void ULootLockerManager::UpdateAssetCandidate(int AssetCandidateId, const FLootLockerUpdateAssetCandidateData& AssetCandidateData, const  FAssetCandidateResponseDelegateBP& OnUpdateAssetCandidateCompleted)
 {
     ULootLockerUserGeneratedContentRequestHandler::UpdateAssetCandidate(AssetCandidateId, AssetCandidateData, OnUpdateAssetCandidateCompleted);
@@ -872,6 +896,56 @@ void ULootLockerManager::GetTriggeredEvents(const FTriggersResponseDelegateBP& O
     ULootLockerTriggerEventsRequestHandler::GetTriggeredEvents(OnGetTriggeredEventsCompleted);
 }
 
+//Triggers
+void ULootLockerManager::InvokeTriggersByKey(const TArray<FString>& KeysToInvoke, const FLootLockerInvokeTriggersByKeyResponseBP& OnComplete)
+{
+    ULootLockerTriggersRequestHandler::InvokeTriggersByKey(KeysToInvoke, OnComplete);
+}
+
+//Notifications
+void ULootLockerManager::ListNotificationsWithDefaultParameters(const FLootLockerListNotificationsResponseBP& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::ListNotificationsWithDefaultParameters(OnComplete);
+}
+
+void ULootLockerManager::ListNotifications(bool ShowRead, const FString& OfType, const FString& WithSource, int PerPage, int Page, const FLootLockerListNotificationsResponseBP& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::ListNotifications(ShowRead, OfType, WithSource, PerPage, Page, OnComplete);
+}
+
+void ULootLockerManager::ListNotificationsWithPriority(ELootLockerNotificationPriority WithPriority, bool ShowRead, const FString& OfType, const FString& WithSource, int PerPage, int Page, const FLootLockerListNotificationsResponseBP& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::ListNotifications(WithPriority, ShowRead, OfType, WithSource, PerPage, Page, OnComplete);
+}
+
+void ULootLockerManager::MarkAllNotificationsAsRead(const FLootLockerReadNotificationsResponseBP& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::MarkAllNotificationsAsRead(OnComplete);
+}
+
+void ULootLockerManager::MarkNotificationsAsRead(const TArray<FLootLockerNotification>& Notifications, const FLootLockerReadNotificationsResponseBP& OnComplete)
+{
+    TArray<FString> UnreadNotificationIds;
+	for (const FLootLockerNotification& Notification : Notifications)
+	{
+		if(!Notification.Read)
+		{
+            UnreadNotificationIds.Add(Notification.Id);
+		}
+	}
+    MarkNotificationsAsReadByIds(UnreadNotificationIds, OnComplete);
+}
+
+void ULootLockerManager::MarkNotificationsAsReadByIds(const TArray<FString>& NotificationIDs, const FLootLockerReadNotificationsResponseBP& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::MarkNotificationsAsRead(NotificationIDs, OnComplete);
+}
+
+bool ULootLockerManager::TryGetNotificationsByIdentifyingValue(const FLootLockerListNotificationsResponse& NotificationsResponse, const FString& IdentifyingValue, TArray<FLootLockerNotification>& Notifications)
+{
+    return NotificationsResponse.TryGetNotificationsByIdentifyingValue(IdentifyingValue, Notifications);
+}
+
 void ULootLockerManager::GetAllCollectables(const FCollectablesResponseDelegateBP& OnGetAllCollectablesCompleted)
 {
     ULootLockerCollectablesRequestHandler::GetAllCollectables(OnGetAllCollectablesCompleted);
@@ -885,6 +959,11 @@ void ULootLockerManager::CollectItem(const FLootLockerCollectItemPayload& Item, 
 void ULootLockerManager::GetMessages(const FMessagesResponseDelegateBP& OnGetMessagesCompleted)
 {
     ULootLockerMessagesRequestHandler::GetMessages(OnGetMessagesCompleted);
+}
+
+void ULootLockerManager::ListLeaderboards(int Count, int After, const FLootLockerListLeaderboardsResponseBP& OnCompletedRequestBP)
+{
+    ULootLockerLeaderboardRequestHandler::ListLeaderboards(Count, After, OnCompletedRequestBP);
 }
 
 void ULootLockerManager::GetMemberRank(FString LeaderboardKey, FString MemberId, const FLootLockerGetMemberRankResponseBP& OnCompletedRequestBP)
@@ -968,6 +1047,11 @@ void ULootLockerManager::PickDropsFromDropTable(TArray<int> Picks, int TableId, 
 void ULootLockerManager::ListCurrencies(const FLootLockerListCurrenciesResponseBP& OnCompletedRequest)
 {
     ULootLockerCurrencyRequestHandler::ListCurrencies(OnCompletedRequest);
+}
+
+void ULootLockerManager::GetCurrencyDetails(const FString& CurrencyCode, const FLootLockerGetCurrencyDetailsResponseBP& OnCompletedRequest)
+{
+    ULootLockerCurrencyRequestHandler::GetCurrencyDetails(CurrencyCode, OnCompletedRequest);
 }
 
 void ULootLockerManager::GetCurrencyDenominationsByCode(const FString& CurrencyCode, const FLootLockerListDenominationsResponseBP& OnCompletedRequest)
@@ -1059,6 +1143,185 @@ void ULootLockerManager::SendUGCFeedback(const FString& Ulid, const FString& Des
 {
     ULootLockerFeedbackRequestHandler::SendFeedback(Ulid, Description, CategoryID, ELootLockerFeedbackType::Ugc, OnComplete);
 
+}
+
+// Metadata
+
+void ULootLockerManager::ListMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const int Page, const int PerPage, const bool IgnoreFiles, const FLootLockerListMetadataResponseBP& OnComplete)
+{
+    ULootLockerMetadataRequestHandler::ListMetadata(Source, SourceID, Page, PerPage, FString(), TArray<FString>(), IgnoreFiles, OnComplete);
+}
+
+void ULootLockerManager::ListMetadataWithTags(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FString>& Tags, const int Page, const int PerPage, const bool IgnoreFiles, const FLootLockerListMetadataResponseBP& OnComplete)
+{
+    ULootLockerMetadataRequestHandler::ListMetadata(Source, SourceID, Page, PerPage, FString(), Tags, IgnoreFiles, OnComplete);
+}
+
+void ULootLockerManager::GetMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const FString& Key, const bool IgnoreFiles, const FLootLockerGetMetadataResponseBP& OnComplete)
+{
+    ULootLockerMetadataRequestHandler::GetMetadata(Source, SourceID, Key, IgnoreFiles, OnComplete);
+}
+
+void ULootLockerManager::GetMultisourceMetadata(const TArray<FLootLockerMetadataSourceAndKeys>& SourcesAndKeysToGet, const bool IgnoreFiles, const FLootLockerGetMultisourceMetadataResponseBP& OnComplete)
+{
+    ULootLockerMetadataRequestHandler::GetMultisourceMetadata(SourcesAndKeysToGet, IgnoreFiles, OnComplete);
+}
+
+void ULootLockerManager::ParseLootLockerMetadataEntry(const FLootLockerMetadataEntry& Entry,
+                                                      ELootLockerMetadataParserOutputTypes& MetadataTypeSwitch,
+                                                      FString& StringValue, int& IntegerValue,
+                                                      float& FloatValue, FString& NumberString, bool& BoolValue,
+                                                      FString& JsonStringValue,
+                                                      FLootLockerMetadataBase64Value& Base64Value,
+                                                      FString& ErrorMessage, FLootLockerMetadataEntry& OutEntry)
+{
+    MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnError;
+    StringValue = "";
+    BoolValue = false;
+    IntegerValue = 0;
+    FloatValue = 0.0f;
+    NumberString = "";
+    JsonStringValue = "";
+    Base64Value = FLootLockerMetadataBase64Value();
+    ErrorMessage = "Unknown Error";
+    OutEntry = Entry;
+    FString ValueToParse;
+    if(!Entry.TryGetSerializedValue(ValueToParse))
+    {
+        ErrorMessage = FString::Format(TEXT("Couldn't get serialized value for type: \"{0}\""), { static_cast<int>(Entry.Type) }); ;
+        return;	    
+    }
+    switch (Entry.Type)
+    {
+    case ELootLockerMetadataTypes::String:
+    {
+        if (Entry.TryGetValueAsString(StringValue))
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnString;
+            return;
+        }
+        ErrorMessage = "Value \"" + ValueToParse + "\" could not be parsed";
+        return;
+    }
+    case ELootLockerMetadataTypes::Number:
+    {
+        if (!FCString::IsNumeric(*ValueToParse))
+        {
+            ErrorMessage = "Could not parse value \"" + ValueToParse + "\" as Number because it is not numeric";
+            return;
+        }
+        // Parse as float
+        if (ValueToParse.Contains(".") && Entry.TryGetValueAsFloat(FloatValue))
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnFloat;
+            return;
+        }
+        // Parse as int
+        if (Entry.TryGetValueAsInteger(IntegerValue))
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnInteger;
+            return;
+        }
+        //Treat as non int or float value, likely BigInt or BigDecimal
+        MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnNumber;
+        NumberString = ValueToParse;
+        return;
+    }
+    case ELootLockerMetadataTypes::Bool:
+    {
+        if (Entry.TryGetValueAsBool(BoolValue))
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnBool;
+            return;
+        }
+        ErrorMessage = "Value \"" + ValueToParse + "\" could not be parsed as boolean value";
+        return;
+    }
+    case ELootLockerMetadataTypes::Json:
+    {
+        TSharedPtr<FJsonObject> JsonObject = nullptr;
+        if (Entry.TryGetValueAsJsonObject(JsonObject) && JsonObject.IsValid())
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnJson;
+            JsonStringValue = ValueToParse;
+            return;
+        }
+        TArray<TSharedPtr<FJsonValue>> OutputJsonArray;
+        if (Entry.TryGetValueAsJsonArray(OutputJsonArray))
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnJson;
+            JsonStringValue = ValueToParse;
+            return;
+        }
+        ErrorMessage = "Could not parse value \"" + ValueToParse + "\" because it is not a valid Json String";
+        return;
+    }
+    case ELootLockerMetadataTypes::Base64:
+    {
+        if (Entry.TryGetValueAsBase64(Base64Value) && !Base64Value.Content_type.IsEmpty())
+        {
+            MetadataTypeSwitch = ELootLockerMetadataParserOutputTypes::OnBase64;
+            return;
+        }
+        ErrorMessage = "Could not parse value \"" + ValueToParse + "\" because it is not a valid LootLocker Metadata Base64 Object";
+        return;
+    }
+    default:
+    {
+        ErrorMessage = "Could not parse value \"" + ValueToParse + "\" because the type \"" + ULootLockerEnumUtils::GetEnum(TEXT("ELootLockerMetadataTypes"), static_cast<int32>(Entry.Type)) + "\" was not recognized by the parser";
+        return;
+    }
+    }
+}
+
+void ULootLockerManager::SetMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FLootLockerSetMetadataAction>& MetadataToActionsToPerform, const FLootLockerSetMetadataResponseBP& OnComplete)
+{
+    ULootLockerMetadataRequestHandler::SetMetadata(Source, SourceID, MetadataToActionsToPerform, OnComplete);
+}
+
+FLootLockerSetMetadataAction ULootLockerManager::MakeMetadataActionString(ELootLockerMetadataActions Action, const FString& Key, const FString& Value, const TArray<FString>& Tags, const TArray<FString>& Access)
+{
+    return FLootLockerSetMetadataAction{ Action, FLootLockerMetadataEntry::MakeStringEntry(Key, Tags, Access, Value) };
+}
+
+FLootLockerSetMetadataAction ULootLockerManager::MakeMetadataActionFloat(ELootLockerMetadataActions Action, const FString& Key, const float& Value, const TArray<FString>& Tags, const TArray<FString>& Access)
+{
+    return FLootLockerSetMetadataAction{ Action, FLootLockerMetadataEntry::MakeFloatEntry(Key, Tags, Access, Value) };
+}
+
+FLootLockerSetMetadataAction ULootLockerManager::MakeMetadataActionInteger(ELootLockerMetadataActions Action, const FString& Key, const int Value, const TArray<FString>& Tags, const TArray<FString>& Access)
+{
+    return FLootLockerSetMetadataAction{Action, FLootLockerMetadataEntry::MakeIntegerEntry(Key, Tags, Access, Value)};
+}
+
+FLootLockerSetMetadataAction ULootLockerManager::MakeMetadataActionBool(ELootLockerMetadataActions Action, const FString& Key, const bool Value, const TArray<FString>& Tags, const TArray<FString>& Access)
+{
+    return FLootLockerSetMetadataAction{Action, FLootLockerMetadataEntry::MakeBoolEntry(Key, Tags, Access, Value)};
+}
+
+void ULootLockerManager::MakeMetadataActionJson(ELootLockerMetadataActions Action, const FString& Key, const FString& Value, const TArray<FString>& Tags, const TArray<FString>& Access, bool& Succeeded, FLootLockerSetMetadataAction& ConstructedEntry)
+{
+    TArray<TSharedPtr<FJsonValue>> JsonArrayValue;
+    if(LootLockerUtilities::JsonArrayFromFString(Value, JsonArrayValue))
+    {
+        ConstructedEntry = FLootLockerSetMetadataAction{Action, FLootLockerMetadataEntry::MakeJsonArrayEntry(Key, Tags, Access, JsonArrayValue)};
+        Succeeded = true;
+        return;
+    }
+
+    TSharedPtr<FJsonObject> JsonObjectValue = LootLockerUtilities::JsonObjectFromFString(Value);
+    if(JsonObjectValue.IsValid())
+    {
+         ConstructedEntry = FLootLockerSetMetadataAction{Action, FLootLockerMetadataEntry::MakeJsonObjectEntry(Key, Tags, Access, *JsonObjectValue)};
+         Succeeded = true;
+         return;
+    }
+    Succeeded = false;
+}
+
+FLootLockerSetMetadataAction ULootLockerManager::MakeMetadataActionBase64(ELootLockerMetadataActions Action, const FString& Key, const FLootLockerMetadataBase64Value& Value, const TArray<FString>& Tags, const TArray<FString>& Access)
+{
+    return FLootLockerSetMetadataAction{Action, FLootLockerMetadataEntry::MakeBase64Entry(Key, Tags, Access, Value)};
 }
 
 // Miscellaneous

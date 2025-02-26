@@ -160,6 +160,8 @@ struct FLootLockerAsset : public FLootLockerHasKeyValueStorage
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FString uuid;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    FString ulid;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FString name;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     bool active = false;
@@ -223,10 +225,8 @@ struct FLootLockerAsset : public FLootLockerHasKeyValueStorage
     FString shop_thumbnail;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     TMap<FString, bool> default_loadouts;
-    
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FLootLockerExternalIdentifiers external_identifiers;
-    
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     FString drop_table_max_picks;
 };
@@ -248,6 +248,8 @@ struct FLootLockerContext {
     bool user_facing = false;
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
     int32 dependent_asset_id = 0;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LootLocker")
+    int32 max_equip_count = 0;
 };
 
 USTRUCT(BlueprintType)

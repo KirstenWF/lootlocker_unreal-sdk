@@ -2,7 +2,12 @@
 
 #include "LootLockerGameEndpoints.h"
 
-FString ULootLockerGameEndpoints::GameBaseUrl = "https://{domainKey}api.lootlocker.io/game/";
+#ifdef LOOTLOCKER_USE_STAGE_URL
+FString ULootLockerGameEndpoints::BaseUrl = "https://{domainKey}api.stage.internal.dev.lootlocker.cloud/";
+#else
+FString ULootLockerGameEndpoints::BaseUrl = "https://{domainKey}api.lootlocker.com/";
+#endif
+FString ULootLockerGameEndpoints::GameUrlSuffix = "game/";
 
 //Auth
 FLootLockerEndPoints ULootLockerGameEndpoints::StartSessionEndpoint = InitEndpoint("v2/session", ELootLockerHTTPMethod::POST);
@@ -20,6 +25,7 @@ FLootLockerEndPoints ULootLockerGameEndpoints::GuestloginEndpoint = InitEndpoint
 FLootLockerEndPoints ULootLockerGameEndpoints::StartAppleGameCenterSessionEndpoint = InitEndpoint("session/apple/game-center", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerGameEndpoints::RefreshAppleGameCenterSessionEndpoint = InitEndpoint("session/apple/game-center", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerGameEndpoints::MetaSessionEndpoint = InitEndpoint("session/meta", ELootLockerHTTPMethod::POST);
+FLootLockerEndPoints ULootLockerGameEndpoints::SteamSessionEndpoint = InitEndpoint("session/steam", ELootLockerHTTPMethod::POST);
 
 // Connected Accounts
 FLootLockerEndPoints ULootLockerGameEndpoints::ListConnectedAccountsEndpoint = InitEndpoint("v1/connected-accounts", ELootLockerHTTPMethod::GET);
@@ -32,12 +38,12 @@ FLootLockerEndPoints ULootLockerGameEndpoints::StartRemoteSessionEndpoint = Init
 FLootLockerEndPoints ULootLockerGameEndpoints::RefreshRemoteSessionEndpoint = InitEndpoint("session/remote", ELootLockerHTTPMethod::POST);
 
 // White Label
-FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelSignupEndpoint = InitEndpoint("white-label-login/sign-up", ELootLockerHTTPMethod::POST);
-FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelLoginEndpoint = InitEndpoint("white-label-login/login", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelAuthEndpoint = InitEndpoint("v2/session/white-label", ELootLockerHTTPMethod::POST);
-FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelVerifySessionEndpoint = InitEndpoint("white-label-login/verify-session", ELootLockerHTTPMethod::POST);
-FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelRequestPasswordResetEndpoint = InitEndpoint("white-label-login/request-reset-password", ELootLockerHTTPMethod::POST);
-FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelRequestVerificationEndpoint = InitEndpoint("white-label-login/request-verification", ELootLockerHTTPMethod::POST);
+FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelSignupEndpoint = InitEndpoint("white-label-login/sign-up", ELootLockerHTTPMethod::POST, ELootLockerApiType::LL_WHITELABEL);
+FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelLoginEndpoint = InitEndpoint("white-label-login/login", ELootLockerHTTPMethod::POST, ELootLockerApiType::LL_WHITELABEL);
+FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelVerifySessionEndpoint = InitEndpoint("white-label-login/verify-session", ELootLockerHTTPMethod::POST, ELootLockerApiType::LL_WHITELABEL);
+FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelRequestPasswordResetEndpoint = InitEndpoint("white-label-login/request-reset-password", ELootLockerHTTPMethod::POST, ELootLockerApiType::LL_WHITELABEL);
+FLootLockerEndPoints ULootLockerGameEndpoints::WhiteLabelRequestVerificationEndpoint = InitEndpoint("white-label-login/request-verification", ELootLockerHTTPMethod::POST, ELootLockerApiType::LL_WHITELABEL);
 
 //Files
 FLootLockerEndPoints ULootLockerGameEndpoints::FileUploadEndpoint = InitEndpoint("player/files", ELootLockerHTTPMethod::POST);
@@ -48,6 +54,8 @@ FLootLockerEndPoints ULootLockerGameEndpoints::DeleteFileEndpoint = InitEndpoint
 FLootLockerEndPoints ULootLockerGameEndpoints::ListOtherPlayersFilesEndpoint = InitEndpoint("player/{0}/files", ELootLockerHTTPMethod::GET);
 
 //Player
+FLootLockerEndPoints ULootLockerGameEndpoints::GetInfoFromSession = InitEndpoint("player/hazy-hammock/v1/info", ELootLockerHTTPMethod::GET);
+FLootLockerEndPoints ULootLockerGameEndpoints::ListPlayerInfo = InitEndpoint("player/hazy-hammock/v1/info", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetPlayerInfoEndPoint = InitEndpoint("v1/player/info", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetPlayerInventoryEndPoint = InitEndpoint("v1/player/inventory/list", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::SubmitXpEndpoint = InitEndpoint("v1/player/xp", ELootLockerHTTPMethod::POST);
@@ -186,6 +194,14 @@ FLootLockerEndPoints ULootLockerGameEndpoints::FinalizeSteamPurchaseRedemption =
 FLootLockerEndPoints ULootLockerGameEndpoints::TriggerEventEndpoint = InitEndpoint("v1/player/trigger", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetTriggeredEventsEndpoint = InitEndpoint("v1/player/triggers", ELootLockerHTTPMethod::GET);
 
+//Triggers
+FLootLockerEndPoints ULootLockerGameEndpoints::InvokeTriggers = InitEndpoint("triggers/cozy-crusader/v1", ELootLockerHTTPMethod::POST);
+
+//Notifications
+FLootLockerEndPoints ULootLockerGameEndpoints::ListNotifications = InitEndpoint("notifications/v1", ELootLockerHTTPMethod::GET);
+FLootLockerEndPoints ULootLockerGameEndpoints::ReadNotifications = InitEndpoint("notifications/v1/read", ELootLockerHTTPMethod::PUT);
+FLootLockerEndPoints ULootLockerGameEndpoints::ReadAllNotifications = InitEndpoint("notifications/v1/read/all", ELootLockerHTTPMethod::PUT);
+
 //Collectables
 FLootLockerEndPoints ULootLockerGameEndpoints::GetAllCollectablesEndpoint = InitEndpoint("v1/collectable", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::CollectItemEndpoint = InitEndpoint("v1/collectable", ELootLockerHTTPMethod::POST);
@@ -194,6 +210,7 @@ FLootLockerEndPoints ULootLockerGameEndpoints::CollectItemEndpoint = InitEndpoin
 FLootLockerEndPoints ULootLockerGameEndpoints::GetMessagesEndpoint = InitEndpoint("v1/messages", ELootLockerHTTPMethod::GET);
 
 //Leaderboards
+FLootLockerEndPoints ULootLockerGameEndpoints::ListLeaderboards = InitEndpoint("leaderboards", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetMemberRank = InitEndpoint("leaderboards/{0}/member/{1}", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetByListOfMembers = InitEndpoint("leaderboards/{0}/members", ELootLockerHTTPMethod::POST);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetScoreList = InitEndpoint("leaderboards/{0}/list?count={1}", ELootLockerHTTPMethod::GET);
@@ -215,6 +232,7 @@ FLootLockerEndPoints ULootLockerGameEndpoints::PickDropsFromDropTable = InitEndp
 
 // Currencies
 FLootLockerEndPoints ULootLockerGameEndpoints::ListCurrencies = InitEndpoint("currencies", ELootLockerHTTPMethod::GET);
+FLootLockerEndPoints ULootLockerGameEndpoints::GetCurrencyDetails = InitEndpoint("currency/code/{0}", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::GetCurrencyDenominationsByCode = InitEndpoint("currency/code/{0}/denominations", ELootLockerHTTPMethod::GET);
 
 // Balances
@@ -243,17 +261,26 @@ FLootLockerEndPoints ULootLockerGameEndpoints::Crashes = InitEndpoint("v1/crash"
 FLootLockerEndPoints ULootLockerGameEndpoints::ListFeedbackCategories = InitEndpoint("feedback/category/entity/{0}", ELootLockerHTTPMethod::GET);
 FLootLockerEndPoints ULootLockerGameEndpoints::SendFeedback = InitEndpoint("feedback", ELootLockerHTTPMethod::POST);
 
-FLootLockerEndPoints ULootLockerGameEndpoints::InitEndpoint(const FString& Endpoint, ELootLockerHTTPMethod Method)
+// Metadata
+FLootLockerEndPoints ULootLockerGameEndpoints::ListMetadata = InitEndpoint("metadata/source/{0}/id/{1}", ELootLockerHTTPMethod::GET);
+FLootLockerEndPoints ULootLockerGameEndpoints::GetMultisourceMetadata = InitEndpoint("metadata/multisource", ELootLockerHTTPMethod::POST);
+FLootLockerEndPoints ULootLockerGameEndpoints::MetadataActions = InitEndpoint("metadata", ELootLockerHTTPMethod::POST);
+
+
+FLootLockerEndPoints ULootLockerGameEndpoints::InitEndpoint(const FString& Endpoint, ELootLockerHTTPMethod Method, ELootLockerApiType ApiType /*= ELootLockerApiType::LL_GAME*/)
 {
 	FLootLockerEndPoints Result;
-	Result.endpoint = GameBaseUrl + Endpoint;
+	FString UrlBase = BaseUrl;
+	switch (ApiType)
+	{
+		case ELootLockerApiType::LL_WHITELABEL:
+			break;
+		case ELootLockerApiType::LL_GAME:
+		default:
+			UrlBase += GameUrlSuffix;
+	}
+	Result.endpoint = UrlBase + Endpoint;
 	Result.requestMethod = Method;
 
-	// Todo: Do this cleanly lol
-	if (Endpoint.Contains("white-label-login"))
-	{
-		// White-label has its own endpoint but I'm too lazy to refactor this whole thing to support it so yolo
-		Result.endpoint = Result.endpoint.Replace(TEXT(".io/game/"), TEXT(".io/"));
-	}
 	return Result;
 }

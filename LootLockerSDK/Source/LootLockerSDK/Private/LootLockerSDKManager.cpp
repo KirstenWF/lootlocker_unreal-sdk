@@ -49,6 +49,11 @@ void ULootLockerSDKManager::VerifyPlayerAndStartSteamSession(const FString& Stea
         }));
 }
 
+void ULootLockerSDKManager::StartSteamSessionUsingTicket(const FString& SteamSessionTicket, const FLootLockerSessionResponse& OnCompletedRequest, const FString& SteamAppId /* = "" */)
+{
+    ULootLockerAuthenticationRequestHandler::StartSteamSession(SteamSessionTicket, SteamAppId, FAuthResponseBP(), OnCompletedRequest);
+}
+
 void ULootLockerSDKManager::StartSteamSession(const FString& SteamId64, const FLootLockerSessionResponse& OnCompletedRequest)
 {
     ULootLockerAuthenticationRequestHandler::StartSteamSession(SteamId64, FAuthResponseBP(), OnCompletedRequest);
@@ -89,9 +94,9 @@ void ULootLockerSDKManager::RefreshAppleSession(const FString& RefreshToken, con
     ULootLockerAuthenticationRequestHandler::RefreshAppleSession(RefreshToken, FAppleSessionResponseBP(), OnCompletedRequest);
 }
 
-void ULootLockerSDKManager::StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseBP& OnStartedAppleGameCenterSessionCompleted)
+void ULootLockerSDKManager::StartAppleGameCenterSession(const FString& BundleId, const FString& PlayerId, const FString& PublicKeyUrl, const FString& Signature, const FString& Salt, const FString& Timestamp, const FLootLockerAppleGameCenterSessionResponseDelegate& OnStartedAppleGameCenterSessionCompleted)
 {
-    ULootLockerAuthenticationRequestHandler::StartAppleGameCenterSession(BundleId, PlayerId, PublicKeyUrl, Signature, Salt, Timestamp, OnStartedAppleGameCenterSessionCompleted);
+    ULootLockerAuthenticationRequestHandler::StartAppleGameCenterSession(BundleId, PlayerId, PublicKeyUrl, Signature, Salt, Timestamp, FLootLockerAppleGameCenterSessionResponseBP(), OnStartedAppleGameCenterSessionCompleted);
 }
 
 void ULootLockerSDKManager::RefreshAppleGameCenterSession(const FString& RefreshToken, const FLootLockerAppleGameCenterSessionResponseDelegate& OnRefreshAppleGameCenterSessionCompleted)
@@ -121,7 +126,7 @@ void ULootLockerSDKManager::RefreshMetaSession(const FString& RefreshToken, cons
 
 void ULootLockerSDKManager::WhiteLabelStartSession(const FLootLockerSessionResponse &OnCompletedRequest)
 {
-	ULootLockerAuthenticationRequestHandler::WhiteLabelStartSession(FAuthResponseBP(), OnCompletedRequest);
+    ULootLockerAuthenticationRequestHandler::WhiteLabelStartSession(FAuthResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::WhiteLabelLoginAndStartSession(const FString& Email, const FString& Password, const FLootLockerWhiteLabelLoginAndSessionResponseDelegate& OnCompletedRequest, const bool Remember)
@@ -151,17 +156,17 @@ void ULootLockerSDKManager::WhiteLabelRequestPasswordReset(const FString &Email,
 
 void ULootLockerSDKManager::GuestLogin(const FLootLockerSessionResponse &OnCompletedRequest, const FString& PlayerIdentifier)
 {
-	ULootLockerAuthenticationRequestHandler::GuestLogin(PlayerIdentifier, FAuthResponseBP(), OnCompletedRequest);
+    ULootLockerAuthenticationRequestHandler::GuestLogin(PlayerIdentifier, FAuthResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::VerifyPlayer(const FString& PlatformToken, const FLootLockerDefaultDelegate& OnCompleteRequest, const FString& Platform)
 {
-	ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, -1, FLootLockerDefaultResponseBP(), OnCompleteRequest);
+    ULootLockerAuthenticationRequestHandler::VerifyPlayer(PlatformToken, Platform, -1, FLootLockerDefaultResponseBP(), OnCompleteRequest);
 }
 
 void ULootLockerSDKManager::EndSession(const FLootLockerDefaultDelegate& OnCompleteRequest)
 {
-	ULootLockerAuthenticationRequestHandler::EndSession(FLootLockerDefaultResponseBP(), OnCompleteRequest);
+    ULootLockerAuthenticationRequestHandler::EndSession(FLootLockerDefaultResponseBP(), OnCompleteRequest);
 }
 
 //==================================================
@@ -211,39 +216,49 @@ void ULootLockerSDKManager::RefreshRemoteSession(const FString& RefreshToken, co
 }
 
 //Player
+void ULootLockerSDKManager::GetCurrentPlayerInfo(const FLootLockerGetCurrentPlayerInfoResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerPlayerRequestHandler::GetCurrentPlayerInfo(FLootLockerGetCurrentPlayerInfoResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::ListPlayerInfo(TArray<FString> PlayerIdsToLookUp, TArray<int> PlayerLegacyIdsToLookUp, TArray<FString> PlayerPublicUidsToLookUp, const FLootLockerListPlayerInfoResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerPlayerRequestHandler::ListPlayerInfo(PlayerIdsToLookUp, PlayerLegacyIdsToLookUp, PlayerPublicUidsToLookUp, FLootLockerListPlayerInfoResponseBP(), OnCompletedRequest);
+}
+
 void ULootLockerSDKManager::GetPlayerInfo(const FLootLockerPlayerInformationResponse& OnCompletedRequest)
 {
-	ULootLockerPlayerRequestHandler::GetPlayerInfo(FPInfoResponseBP(), OnCompletedRequest);
+    ULootLockerPlayerRequestHandler::GetPlayerInfo(FPInfoResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetInventory(const FInventoryResponse& OnCompletedRequest)
 {
-	ULootLockerPlayerRequestHandler::GetInventory(FPInventoryResponseBP(), OnCompletedRequest);
+    ULootLockerPlayerRequestHandler::GetInventory(FPInventoryResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetFullInventory(const FInventoryResponse &OnCompletedRequest, int32 StartIndex)
 {
-	ULootLockerPlayerRequestHandler::GetFullInventory(FPInventoryResponseBP(), OnCompletedRequest, StartIndex);
+    ULootLockerPlayerRequestHandler::GetFullInventory(FPInventoryResponseBP(), OnCompletedRequest, StartIndex);
 }
 
 void ULootLockerSDKManager::SubmitXP(int Points, const FSubmitXpResponse& OnCompletedRequest)
 {
-	ULootLockerPlayerRequestHandler::SubmitXp(Points, FPSubmitResponseBP(), OnCompletedRequest);
+    ULootLockerPlayerRequestHandler::SubmitXp(Points, FPSubmitResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetOtherPlayersXpAndLevel(FString OtherPlayerId, const FOtherPlayersXpAndLevelResponse& OnCompletedRequest, FString OtherPlayerPlatform)
 {
-	ULootLockerPlayerRequestHandler::GetOtherPlayersXpAndLevel(OtherPlayerId, OtherPlayerPlatform, FPOtherPlayersXpAndLevelBP(), OnCompletedRequest);
+    ULootLockerPlayerRequestHandler::GetOtherPlayersXpAndLevel(OtherPlayerId, OtherPlayerPlatform, FPOtherPlayersXpAndLevelBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetMultiplePlayersXp(FLootLockerMultiplePlayersXpRequest &Request, const FPMultiplePlayersXP &OnCompletedRequest)
 {
-	ULootLockerPlayerRequestHandler::GetMultiplePlayersXp(Request, FPMultiplePlayersXPBP(), OnCompletedRequest);
+    ULootLockerPlayerRequestHandler::GetMultiplePlayersXp(Request, FPMultiplePlayersXPBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::CheckPlayerAssetActivationNotification(const FLootLockerAssetNotificationResponse& OnCompletedRequest)
 {
-	ULootLockerPlayerRequestHandler::CheckPlayerAssetNotification(FPAssetNotificationResponseBP(), OnCompletedRequest);
+    ULootLockerPlayerRequestHandler::CheckPlayerAssetNotification(FPAssetNotificationResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetCurrencyBalance(const FPBalanceResponse& onCompletedRequest)
@@ -284,7 +299,7 @@ void ULootLockerSDKManager::DeletePlayer(const FLootLockerDefaultDelegate& OnCom
 //Files
 void ULootLockerSDKManager::UploadFile(const FLootLockerFileUploadRequest& Request, const FLootLockerUploadFileDelegate& OnComplete)
 {
-	ULLPlayerFilesRequestHandler::UploadFile(Request, FLootLockerUploadFileBP(), OnComplete);
+    ULLPlayerFilesRequestHandler::UploadFile(Request, FLootLockerUploadFileBP(), OnComplete);
 }
 
 void ULootLockerSDKManager::UpdateFile(const int32 FileId, const FLootLockerFileUpdateRequest& Request, const FLootLockerUploadFileDelegate& OnComplete)
@@ -294,7 +309,7 @@ void ULootLockerSDKManager::UpdateFile(const int32 FileId, const FLootLockerFile
 
 void ULootLockerSDKManager::ListFiles(const FLootLockerFileListDelegate &OnComplete)
 {
-	ULLPlayerFilesRequestHandler::ListFiles(FLootLockerFileListBP(), OnComplete);
+    ULLPlayerFilesRequestHandler::ListFiles(FLootLockerFileListBP(), OnComplete);
 }
 
 void ULootLockerSDKManager::ListOtherPlayersPublicFiles(const int32 PlayerID, const FLootLockerFileListDelegate& OnComplete)
@@ -304,12 +319,12 @@ void ULootLockerSDKManager::ListOtherPlayersPublicFiles(const int32 PlayerID, co
 
 void ULootLockerSDKManager::GetSingleFile(const int32 FileID, const FLootLockerUploadFileDelegate &OnComplete)
 {
-	ULLPlayerFilesRequestHandler::GetSingleFile(FileID, FLootLockerUploadFileBP(), OnComplete);
+    ULLPlayerFilesRequestHandler::GetSingleFile(FileID, FLootLockerUploadFileBP(), OnComplete);
 }
 
 void ULootLockerSDKManager::DeletePlayerFile(const int32 FileID, const FLootLockerFileDeletedDelegate &OnComplete)
 {
-	ULLPlayerFilesRequestHandler::DeletePlayerFile(FileID, FLootLockerFileDeletedBP(), OnComplete);
+    ULLPlayerFilesRequestHandler::DeletePlayerFile(FileID, FLootLockerFileDeletedBP(), OnComplete);
 }
 
 void ULootLockerSDKManager::GetDLCsMigration(const FPDlcResponse& OnCompletedRequest)
@@ -371,89 +386,89 @@ void ULootLockerSDKManager::DeletePlayerProgression(const FString& ProgressionKe
 // Heroes
 void ULootLockerSDKManager::GetGameHeroes(const FLootLockerGameHeroListDelegate& OnCompleteRequest)
 {
-	ULootLockerHeroRequestHandler::GetGameHeroes(FLootLockerGameHeroListBP(), OnCompleteRequest);
+    ULootLockerHeroRequestHandler::GetGameHeroes(FLootLockerGameHeroListBP(), OnCompleteRequest);
 }
 
 void ULootLockerSDKManager::ListPlayerHeroes(const FLootLockerHeroListDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::ListPlayerHeroes(FLootLockerHeroListBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::ListPlayerHeroes(FLootLockerHeroListBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::ListOtherPlayersHeroesBySteamID64(const int64 SteamID64, const FLootLockerHeroListDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::ListOtherPlayersHeroesBySteamID64(SteamID64, FLootLockerHeroListBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::ListOtherPlayersHeroesBySteamID64(SteamID64, FLootLockerHeroListBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::CreateHero(const FLootLockerCreateHeroRequest &Request, const FLootLockerPlayerHeroDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::CreateHero(Request, FLootLockerPlayerHeroBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::CreateHero(Request, FLootLockerPlayerHeroBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::CreateHeroWithVariation(const FLootLockerCreateHeroWithVariationRequest &Request, const FLootLockerPlayerHeroDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::CreateHeroWithVariation(Request, FLootLockerPlayerHeroBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::CreateHeroWithVariation(Request, FLootLockerPlayerHeroBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetHero(const int32 HeroID, const FLootLockerPlayerHeroDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::GetHero(HeroID, FLootLockerPlayerHeroBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::GetHero(HeroID, FLootLockerPlayerHeroBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetOtherPlayersDefaultHeroBySteamID64(const int64 SteamID64, const FLootLockerPlayerHeroDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::GetOtherPlayersDefaultHeroBySteamID64(SteamID64, FLootLockerPlayerHeroBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::GetOtherPlayersDefaultHeroBySteamID64(SteamID64, FLootLockerPlayerHeroBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::UpdateHero(const int32 HeroID, const FLootLockerUpdateHeroRequest &Request, const FLootLockerPlayerHeroDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::UpdateHero(HeroID, Request, FLootLockerPlayerHeroBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::UpdateHero(HeroID, Request, FLootLockerPlayerHeroBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::DeleteHero(const int32 HeroID, const FLLHeroDefaultResponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::DeleteHero(HeroID, FLLHeroDefaultResponseBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::DeleteHero(HeroID, FLLHeroDefaultResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetHeroInventory(const int32 HeroID, const FInventoryResponse &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::GetHeroInventory(HeroID, FPInventoryResponseBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::GetHeroInventory(HeroID, FPInventoryResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetHeroLoadout(const int32 HeroID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::GetHeroLoadout(HeroID, FHeroLoadoutReseponseBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::GetHeroLoadout(HeroID, FHeroLoadoutReseponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetOtherPlayersHeroLoadout(const int32 HeroID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::GetOtherPlayersHeroLoadout(HeroID, FHeroLoadoutReseponseBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::GetOtherPlayersHeroLoadout(HeroID, FHeroLoadoutReseponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::AddAssetToHeroLoadout(const int32 HeroID, const int32 AssetInstanceID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::AddAssetToHeroLoadout(HeroID, AssetInstanceID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
+    ULootLockerHeroRequestHandler::AddAssetToHeroLoadout(HeroID, AssetInstanceID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::AddGlobalAssetToHeroLoadout(const int32 HeroID, const int32 AssetID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::AddGlobalAssetToHeroLoadout(HeroID, AssetID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
+    ULootLockerHeroRequestHandler::AddGlobalAssetToHeroLoadout(HeroID, AssetID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::AddGlobalAssetVariationToHeroLoadout(const int32 HeroID, const int32 AssetID, const int32 AssetVariationID, const FHeroLoadoutReseponseDelegate& OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::AddGlobalAssetVariationToHeroLoadout(HeroID, AssetID, AssetVariationID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
+    ULootLockerHeroRequestHandler::AddGlobalAssetVariationToHeroLoadout(HeroID, AssetID, AssetVariationID, FHeroLoadoutReseponseBP(),  OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::RemoveAssetToHeroLoadout(const int32 HeroID, const int32 AssetInstanceID, const FHeroLoadoutReseponseDelegate &OnCompletedRequest)
 {
-	ULootLockerHeroRequestHandler::RemoveAssetToHeroLoadout(HeroID, AssetInstanceID, FHeroLoadoutReseponseBP(), OnCompletedRequest);
+    ULootLockerHeroRequestHandler::RemoveAssetToHeroLoadout(HeroID, AssetInstanceID, FHeroLoadoutReseponseBP(), OnCompletedRequest);
 }
 
 
 //Character
 void ULootLockerSDKManager::GetCharacterLoadout(const FCharacterLoadoutResponse& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::GetCharacterLoadout(FPCharacterLoadoutResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::GetCharacterLoadout(FPCharacterLoadoutResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::UpdateCharacter(int CharacterId, bool IsDefault, FString& Name, const FCharacterLoadoutResponse& OnCompletedRequest)
@@ -473,12 +488,12 @@ void ULootLockerSDKManager::ListCharacterTypes(const FPLootLockerListCharacterTy
 
 void ULootLockerSDKManager::EquipAssetToDefaultCharacter(int InstanceId, const FLootLockerCharacterDefaultResponse& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::EquipAssetToDefaultCharacter(InstanceId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::EquipAssetToDefaultCharacter(InstanceId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::EquipAssetToCharacterById(int CharacterId, int AssetId, int AssetVariationId, const FLootLockerCharacterDefaultResponse& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::EquipAssetToCharacterById(CharacterId, AssetId, AssetVariationId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::EquipAssetToCharacterById(CharacterId, AssetId, AssetVariationId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::EquipAssetToCharacterById(int CharacterId, int InstanceId, const FLootLockerCharacterDefaultResponse& OnCompletedRequest)
@@ -488,32 +503,32 @@ void ULootLockerSDKManager::EquipAssetToCharacterById(int CharacterId, int Insta
 
 void ULootLockerSDKManager::UnEquipAssetToDefaultCharacter(int InstanceId, const FLootLockerCharacterDefaultResponse& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::UnEquipAssetToDefaultCharacter(InstanceId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::UnEquipAssetToDefaultCharacter(InstanceId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::UnEquipAssetToCharacterById(int CharacterId, int InstanceId, const FLootLockerCharacterDefaultResponse& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::UnEquipAssetToCharacterById(CharacterId, InstanceId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::UnEquipAssetToCharacterById(CharacterId, InstanceId, FPCharacterDefaultResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetCurrentLoadoutToDefaultCharacter(const FCharacterLoadoutResponse& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::GetCurrentLoadoutToDefaultCharacter(FPCharacterLoadoutResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::GetCurrentLoadoutToDefaultCharacter(FPCharacterLoadoutResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetOtherPlayersCurrentLoadoutToDefaultCharacter(FString OtherPlayerId, const FCharacterLoadoutResponse& OnCompletedRequest, const FString& OtherPlayerPlatform /*= FString(TEXT(""))*/)
 {
-	ULootLockerCharacterRequestHandler::GetOtherPlayersCurrentLoadoutToDefaultCharacter(OtherPlayerId, OtherPlayerPlatform, FPCharacterLoadoutResponseBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::GetOtherPlayersCurrentLoadoutToDefaultCharacter(OtherPlayerId, OtherPlayerPlatform, FPCharacterLoadoutResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetEquipableContextsToDefaultCharacter(const FContextDelegate& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::GetEquipableContextsToDefaultCharacter(FContextDelegateBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::GetEquipableContextsToDefaultCharacter(FContextDelegateBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetEquipableContextsByCharacterId(int OtherCharacterId, const FContextDelegate& OnCompletedRequest)
 {
-	ULootLockerCharacterRequestHandler::GetEquipableContextsByCharacterId(OtherCharacterId, FContextDelegateBP(), OnCompletedRequest);
+    ULootLockerCharacterRequestHandler::GetEquipableContextsByCharacterId(OtherCharacterId, FContextDelegateBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponse& OnCompletedRequest)
@@ -649,7 +664,7 @@ void ULootLockerSDKManager::GetAssets(const FAssetsResponseDelegate& OnCompleted
 
 void ULootLockerSDKManager::GetUniversalAssets(int After, int ItemsCount, const FUniversalAssetResponseDelegate &OnCompletedRequest)
 {
-	ULootLockerAssetsRequestHandler::GetUniversalAssets(After, ItemsCount, FUniversalAssetResponseDelegateBP(), OnCompletedRequest);
+    ULootLockerAssetsRequestHandler::GetUniversalAssets(After, ItemsCount, FUniversalAssetResponseDelegateBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetAssetsByIds(const TArray<int>& AssetIds, const FAssetsResponseDelegate& OnCompletedRequest)
@@ -729,10 +744,15 @@ void ULootLockerSDKManager::DeleteAssetInstanceFromPlayerInventory(int AssetInst
     ULootLockerAssetInstancesRequestHandler::DeleteAssetInstanceFromPlayerInventory(AssetInstanceID, FDeleteAssetInstanceResponseDelegateBP(), OnCompletedRequest);
 }
 
-//User Generated Candidate
+//User Generated Content
 void ULootLockerSDKManager::CreateAssetCandidate(const FLootLockerCreateAssetCandidateData& AssetCandidateData, const FCreateAssetCandidateResponseDelegate& OnCompletedRequest)
 {
     ULootLockerUserGeneratedContentRequestHandler::CreateAssetCandidate(AssetCandidateData, FCreateAssetCandidateResponseDelegateBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::CreateAssetCandidateAndMarkComplete(const FLootLockerCreateAssetCandidateData& AssetCandidateData, const FCreateAssetCandidateResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerUserGeneratedContentRequestHandler::CreateAssetCandidateAndMarkComplete(AssetCandidateData, FCreateAssetCandidateResponseDelegateBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::UpdateAssetCandidate(int AssetCandidateId, const FLootLockerUpdateAssetCandidateData& AssetCandidateData, const FAssetCandidateResponseDelegate& OnCompletedRequest)
@@ -920,6 +940,51 @@ void ULootLockerSDKManager::GetTriggeredEvents(const FTriggersResponseDelegate& 
     ULootLockerTriggerEventsRequestHandler::GetTriggeredEvents(FTriggersResponseDelegateBP(), OnCompletedRequest);
 }
 
+//Triggers
+void ULootLockerSDKManager::InvokeTriggersByKey(const TArray<FString>& KeysToInvoke, const FLootLockerInvokeTriggersByKeyResponseDelegate& OnComplete)
+{
+    ULootLockerTriggersRequestHandler::InvokeTriggersByKey(KeysToInvoke, FLootLockerInvokeTriggersByKeyResponseBP(), OnComplete);
+}
+
+//Notifications
+void ULootLockerSDKManager::ListNotificationsWithDefaultParameters(const FLootLockerListNotificationsResponseDelegate& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::ListNotificationsWithDefaultParameters(FLootLockerListNotificationsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ListNotifications(bool ShowRead, const FString& OfType, const FString& WithSource, int PerPage, int Page, const FLootLockerListNotificationsResponseDelegate& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::ListNotifications(ShowRead, OfType, WithSource, PerPage, Page, FLootLockerListNotificationsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ListNotificationsWithPriority(ELootLockerNotificationPriority WithPriority, bool ShowRead, const FString& OfType, const FString& WithSource, int PerPage, int Page, const FLootLockerListNotificationsResponseDelegate& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::ListNotifications(WithPriority, ShowRead, OfType, WithSource, PerPage, Page, FLootLockerListNotificationsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::MarkAllNotificationsAsRead(const FLootLockerReadNotificationsResponseDelegate& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::MarkAllNotificationsAsRead(FLootLockerReadNotificationsResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::MarkNotificationsAsRead(const TArray<FLootLockerNotification>& Notifications, const FLootLockerReadNotificationsResponseDelegate& OnComplete)
+{
+    TArray<FString> UnreadNotificationIds;
+    for (const FLootLockerNotification& Notification : Notifications)
+    {
+        if (!Notification.Read)
+        {
+            UnreadNotificationIds.Add(Notification.Id);
+        }
+    }
+    MarkNotificationsAsReadByIds(UnreadNotificationIds, OnComplete);
+}
+
+void ULootLockerSDKManager::MarkNotificationsAsReadByIds(const TArray<FString>& NotificationIDs, const FLootLockerReadNotificationsResponseDelegate& OnComplete)
+{
+    ULootLockerNotificationsRequestHandler::MarkNotificationsAsRead(NotificationIDs, FLootLockerReadNotificationsResponseBP(), OnComplete);
+}
+
 //Collectables
 void ULootLockerSDKManager::GetAllCollectables(const FCollectablesResponseDelegate& OnCompletedRequest)
 {
@@ -935,6 +1000,11 @@ void ULootLockerSDKManager::CollectItem(const FLootLockerCollectItemPayload& Ite
 void ULootLockerSDKManager::GetMessages(const FMessagesResponseDelegate& OnCompletedRequest)
 {
     ULootLockerMessagesRequestHandler::GetMessages(FMessagesResponseDelegateBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::ListLeaderboards(int Count, int After, const FLootLockerListLeaderboardsResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerLeaderboardRequestHandler::ListLeaderboards(Count, After, FLootLockerListLeaderboardsResponseBP(), OnCompletedRequest);
 }
 
 // Leaderboards
@@ -1019,6 +1089,11 @@ void ULootLockerSDKManager::PickDropsFromDropTable(const TArray<int> Picks,const
 void ULootLockerSDKManager::ListCurrencies(const FLootLockerListCurrenciesResponseDelegate& OnCompletedRequest)
 {
     ULootLockerCurrencyRequestHandler::ListCurrencies(FLootLockerListCurrenciesResponseBP(), OnCompletedRequest);
+}
+
+void ULootLockerSDKManager::GetCurrencyDetails(const FString& CurrencyCode, const FLootLockerGetCurrencyDetailsResponseDelegate& OnCompletedRequest)
+{
+    ULootLockerCurrencyRequestHandler::GetCurrencyDetails(CurrencyCode, FLootLockerGetCurrencyDetailsResponseBP(), OnCompletedRequest);
 }
 
 void ULootLockerSDKManager::GetCurrencyDenominationsByCode(const FString& CurrencyCode, const FLootLockerListDenominationsResponseDelegate& OnCompletedRequest)
@@ -1111,6 +1186,43 @@ void ULootLockerSDKManager::SendUGCFeedback(const FString& Ulid, const FString& 
 {
     ULootLockerFeedbackRequestHandler::SendFeedback(Ulid, Description, CategoryID, ELootLockerFeedbackType::Ugc, FLootLockerSendFeedbackResponseBP(), OnComplete);
 
+}
+
+// Metadata
+
+void ULootLockerSDKManager::ListMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const FLootLockerListMetadataResponseDelegate& OnComplete, const bool IgnoreFiles)
+{
+    ULootLockerMetadataRequestHandler::ListMetadata(Source, SourceID, -1, -1, FString(), TArray<FString>(), IgnoreFiles, FLootLockerListMetadataResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ListMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const int Page, const int PerPage, const FLootLockerListMetadataResponseDelegate& OnComplete, const bool IgnoreFiles)
+{
+    ULootLockerMetadataRequestHandler::ListMetadata(Source, SourceID, Page, PerPage, FString(), TArray<FString>(), IgnoreFiles, FLootLockerListMetadataResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ListMetadataWithTags(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FString>& Tags, const FLootLockerListMetadataResponseDelegate& OnComplete, const bool IgnoreFiles)
+{
+    ULootLockerMetadataRequestHandler::ListMetadata(Source, SourceID, -1, -1, FString(), Tags, IgnoreFiles, FLootLockerListMetadataResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::ListMetadataWithTags(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FString>& Tags, const int Page, const int PerPage, const FLootLockerListMetadataResponseDelegate& OnComplete, const bool IgnoreFiles)
+{
+    ULootLockerMetadataRequestHandler::ListMetadata(Source, SourceID, Page, PerPage, FString(), Tags, IgnoreFiles, FLootLockerListMetadataResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const FString& Key, const FLootLockerGetMetadataResponseDelegate& OnComplete, const bool IgnoreFiles)
+{
+    ULootLockerMetadataRequestHandler::GetMetadata(Source, SourceID, Key, IgnoreFiles, FLootLockerGetMetadataResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::GetMultisourceMetadata(const TArray<FLootLockerMetadataSourceAndKeys>& SourcesAndKeysToGet,	const FLootLockerGetMultisourceMetadataResponseDelegate& OnComplete, const bool IgnoreFiles)
+{
+    ULootLockerMetadataRequestHandler::GetMultisourceMetadata(SourcesAndKeysToGet, IgnoreFiles, FLootLockerGetMultisourceMetadataResponseBP(), OnComplete);
+}
+
+void ULootLockerSDKManager::SetMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FLootLockerSetMetadataAction>& MetadataToActionsToPerform,	const FLootLockerSetMetadataResponseDelegate& OnComplete)
+{
+    ULootLockerMetadataRequestHandler::SetMetadata(Source, SourceID, MetadataToActionsToPerform, FLootLockerSetMetadataResponseBP(), OnComplete);
 }
 
 // Miscellaneous

@@ -18,6 +18,13 @@ enum class ELootLockerHTTPMethod : uint8
     UPLOAD = 8      UMETA(DisplayName = "UPLOAD")
 };
 
+UENUM(BlueprintType)
+enum class ELootLockerApiType : uint8
+{
+    LL_GAME = 0         UMETA(DisplayName = "GAME"),
+    LL_WHITELABEL = 1   UMETA(DisplayName = "WL"),
+};
+
 USTRUCT(BlueprintType)
 struct FLootLockerEndPoints
 {
@@ -50,6 +57,7 @@ public:
     static FLootLockerEndPoints EndSessionEndpoint;
     static FLootLockerEndPoints GuestloginEndpoint;
     static FLootLockerEndPoints MetaSessionEndpoint;
+    static FLootLockerEndPoints SteamSessionEndpoint;
 
     // Connected Accounts
     static FLootLockerEndPoints ListConnectedAccountsEndpoint;
@@ -78,6 +86,8 @@ public:
     static FLootLockerEndPoints ListOtherPlayersFilesEndpoint;
 
     //Player
+    static FLootLockerEndPoints GetInfoFromSession;
+    static FLootLockerEndPoints ListPlayerInfo;
     static FLootLockerEndPoints GetPlayerInfoEndPoint;
     static FLootLockerEndPoints GetPlayerInventoryEndPoint;
     static FLootLockerEndPoints SubmitXpEndpoint;
@@ -218,6 +228,14 @@ public:
     static FLootLockerEndPoints TriggerEventEndpoint;
     static FLootLockerEndPoints GetTriggeredEventsEndpoint;
 
+    //Triggers
+    static FLootLockerEndPoints InvokeTriggers;
+
+    //Notifications
+    static FLootLockerEndPoints ListNotifications;
+    static FLootLockerEndPoints ReadNotifications;
+    static FLootLockerEndPoints ReadAllNotifications;
+
     //Collectables
     static FLootLockerEndPoints GetAllCollectablesEndpoint;
     static FLootLockerEndPoints CollectItemEndpoint;
@@ -226,6 +244,7 @@ public:
     static FLootLockerEndPoints GetMessagesEndpoint;
 
     //Leaderboard
+    static FLootLockerEndPoints ListLeaderboards;
     static FLootLockerEndPoints GetMemberRank;
     static FLootLockerEndPoints GetByListOfMembers;
     static FLootLockerEndPoints GetScoreList;
@@ -247,6 +266,7 @@ public:
 
     // Currencies
     static FLootLockerEndPoints ListCurrencies;
+    static FLootLockerEndPoints GetCurrencyDetails;
     static FLootLockerEndPoints GetCurrencyDenominationsByCode;
 
     // Balances
@@ -275,7 +295,13 @@ public:
     static FLootLockerEndPoints ListFeedbackCategories;
     static FLootLockerEndPoints SendFeedback;
 
+    // Metadata
+    static FLootLockerEndPoints ListMetadata;
+    static FLootLockerEndPoints GetMultisourceMetadata;
+    static FLootLockerEndPoints MetadataActions;
+
 private:
-    static FString GameBaseUrl;
-    static FLootLockerEndPoints InitEndpoint(const FString& Endpoint, ELootLockerHTTPMethod Method);
+    static FString BaseUrl;
+    static FString GameUrlSuffix;
+    static FLootLockerEndPoints InitEndpoint(const FString& Endpoint, ELootLockerHTTPMethod Method, ELootLockerApiType ApiType = ELootLockerApiType::LL_GAME);
 };

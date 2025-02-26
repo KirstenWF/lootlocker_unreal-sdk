@@ -18,9 +18,10 @@ public:
 	void UploadFile(const FString& endPoint, const FString& requestType, const FString& FilePath, const TMap<FString, FString>& AdditionalFields, const FResponseCallback& onCompleteRequest, TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
 	void UploadRawData(const FString& endPoint, const FString& requestType, const TArray<uint8>& UpFileRawData, const FString& FileName, const TMap<FString, FString>& AdditionalFields, const FResponseCallback& onCompleteRequest,TMap<FString, FString> customHeaders = TMap<FString, FString>()) const;
 
+    static void LogSuccessfulRequestInformation(const FLootLockerResponse& Response, const FString& RequestMethod, const FString& Endpoint, const FString& Data);
     static void LogFailedRequestInformation(const FLootLockerResponse& Response, const FString& RequestMethod, const FString& Endpoint, const FString& Data);
 private:
-    static bool ResponseIsValid(const FHttpResponsePtr& InResponse, bool bWasSuccessful);
+    static bool ResponseIsSuccess(const FHttpResponsePtr& InResponse, bool bWasSuccessful);
     static const FString UserAgent;
     static const FString UserInstanceIdentifier;
     static FString SDKVersion;

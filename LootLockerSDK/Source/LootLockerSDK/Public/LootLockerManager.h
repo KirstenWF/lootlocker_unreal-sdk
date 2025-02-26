@@ -19,6 +19,7 @@
 #include "GameAPI/LootLockerLeaderboardArchiveRequestHandler.h"
 #include "GameAPI/LootLockerMapsRequestHandler.h"
 #include "GameAPI/LootLockerMessagesRequestHandler.h"
+#include "GameAPI/LootLockerMetadataRequestHandler.h"
 #include "GameAPI/LootLockerMiscellaneousRequestHandler.h"
 #include "GameAPI/LootLockerMissionsRequestHandler.h"
 #include "GameAPI/LootLockerPersistentStorageRequestHandler.h"
@@ -28,8 +29,10 @@
 #include "GameAPI/LootLockerPurchasesRequestHandler.h"
 #include "GameAPI/LootLockerRemoteSessionRequestHandler.h"
 #include "GameAPI/LootLockerTriggerEventsRequestHandler.h"
+#include "GameAPI/LootLockerTriggersRequestHandler.h"
 #include "GameAPI/LootLockerUserGeneratedContentRequestHandler.h"
 #include "GameAPI/LootLockerFeedbackRequestHandler.h"
+#include "GameAPI/LootLockerNotificationsRequestHandler.h"
 #include "LootLockerManager.generated.h"
 
 UCLASS(Blueprintable)
@@ -45,7 +48,7 @@ public:
     /**
      * Start a session for a Playstation Network user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
-     * https://ref.lootlocker.io/game-api/#authentication-request
+     * https://ref.lootlocker.com/game-api/#authentication-request
      *
      * @param PsnOnlineId The PSN Online ID of the player
      * @param OnStartedSessionRequestCompleted Delegate for handling the server response.
@@ -56,7 +59,7 @@ public:
     /**
      * Start a session for an Android user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
-     * https://ref.lootlocker.io/game-api/#authentication-request
+     * https://ref.lootlocker.com/game-api/#authentication-request
      *
      * @param DeviceId The device id of the player
      * @param OnStartedSessionRequestCompleted Delegate for handling the server response.
@@ -67,7 +70,7 @@ public:
     /**
      * Start a session for a Amazon Luna user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
-     * https://ref.lootlocker.io/game-api/#authentication-request
+     * https://ref.lootlocker.com/game-api/#authentication-request
      *
      * @param AmazonLunaGuid The Amazon Luna GUID of the player
      * @param OnStartedSessionRequestCompleted Delegate for handling the server response.
@@ -79,26 +82,39 @@ public:
      * Verify a Steam user and then start a session for that user
      * You can optionally specify a steam app id if you have multiple ones for your game and have configured this in the LootLocker console
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
-     * https://ref.lootlocker.io/game-api/#authentication-request
+     * https://ref.lootlocker.com/game-api/#authentication-request
      *
      * @param SteamId64 The Steam 64 bit Id as an FString
      * @param PlatformToken Platform-specific token.
      * @param SteamAppId (Optional) The specific Steam App Id to verify the player for
      * @param OnCompletedRequest Delegate for handling the server response.
      */
-    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = ( AdvancedDisplay = "SteamAppId", SteamAppId=-1 ))
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = ( AdvancedDisplay = "SteamAppId", SteamAppId=-1, DeprecatedFunction, DeprecationMessage = "This method has been deprecated, please use StartSteamSessionUsingTicket(SteamSessionTicket, <optional>SteamAppId) instead"))
     static void VerifyPlayerAndStartSteamSession(const FString& SteamId64, const FString& PlatformToken, const int SteamAppId, const FAuthResponseBP& OnCompletedRequest);
+
+    /**
+     * Start a session for a steam user
+     * You can optionally specify a steam app id if you have multiple ones for your game and have configured this in the LootLocker console
+     * A game can support multiple platforms, but it is recommended that a build only supports one platform.
+     * https://ref.lootlocker.com/game-api/#authentication-request
+     *
+     * @param SteamSessionTicket Platform-specific token.
+     * @param SteamAppId (Optional) The specific Steam App Id to verify the player for
+     * @param OnCompletedRequest Delegate for handling the server response.
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = ( AdvancedDisplay = "SteamAppId", SteamAppId=""))
+    static void StartSteamSessionUsingTicket(const FString& SteamSessionTicket, const FString& SteamAppId, const FAuthResponseBP& OnCompletedRequest);
 
     /**
      * Start a session for a Steam user
      * Note: Steam requires that you verify the player before starting a steam session. See the method VerifyPlayer
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
-     * https://ref.lootlocker.io/game-api/#authentication-request
+     * https://ref.lootlocker.com/game-api/#authentication-request
      *
      * @param SteamId64 The Steam 64 bit Id as an FString
      * @param OnStartedSessionRequestCompleted Delegate for handling the server response.
      */
-    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication")
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Authentication", meta = (DeprecatedFunction, DeprecationMessage = "This method has been deprecated, please use StartSteamSessionUsingTicket(SteamSessionToken, <optional>SteamAppId) instead"))
     static void StartSteamSession(const FString& SteamId64, const FAuthResponseBP& OnStartedSessionRequestCompleted);
 
     /**
@@ -177,7 +193,7 @@ public:
      * Start a session for a Google user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
      * The Google sign in platform must be enabled in the web console for this to work.
-     * https://ref.lootlocker.io/game-api/#sign-in-with-google
+     * https://ref.lootlocker.com/game-api/#sign-in-with-google
      *
      * @param IdToken The device id of the player
      * @param OnStartedGoogleSessionRequestCompleted Delegate for handling the server response.
@@ -189,7 +205,7 @@ public:
      * Start a session for a Google user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
      * The desired Google sign in platform must be enabled in the web console for this to work.
-     * https://ref.lootlocker.io/game-api/#sign-in-with-google
+     * https://ref.lootlocker.com/game-api/#sign-in-with-google
      *
      * @param IdToken The device id of the player
      * @param Platform Google OAuth2 ClientID platform
@@ -214,7 +230,7 @@ public:
      * Start a session for an Epic Online Services (EOS) user
      * A game can support multiple platforms, but it is recommended that a build only supports one platform.
      * The Epic Games platform must be enabled in the web console for this to work.
-     * https://ref.lootlocker.io/game-api/#sign-in-with-epic-games
+     * https://ref.lootlocker.com/game-api/#sign-in-with-epic-games
      *
      * @param IdToken The device id of the player
      * @param OnStartedEpicSessionRequestCompleted Delegate for handling the server response.
@@ -369,7 +385,7 @@ public:
     /**
      * Verify the player's identity with the server and selected platform.
      * If your game uses Player Verification, you need to call this endpoint before you can register a session.
-     * https://ref.lootlocker.io/game-api/#player-verification
+     * https://ref.lootlocker.com/game-api/#player-verification
      *
      *
      * @param PlatformToken Platform-specific token.
@@ -383,7 +399,7 @@ public:
      * End active session (if any exists)
      * Terminates the session on the LootLocker servers. Any further requests with this session's token will be rejected with an 401 Unauthorized error.
      * Succeeds if a session was ended or no sessions were active
-     * https://ref.lootlocker.io/game-api/#ending-a-session
+     * https://ref.lootlocker.com/game-api/#ending-a-session
      *
      * @param OnEndSessionRequestCompleted Delegate for handling the response of type LootLockerSessionResponse
      */
@@ -482,17 +498,37 @@ public:
     //==================================================
 
     /**
+    * Get information about the currently logged in player such as name and different ids to use for subsequent calls to LootLocker methods
+    *
+    * @param OnCompletedRequest Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Players")
+    static void GetCurrentPlayerInfo(const FLootLockerGetCurrentPlayerInfoResponseBP& OnCompletedRequest);
+
+    /**
+    * List information for one or more other players
+    *
+    * @param PlayerIdsToLookUp A list of ULID ids of players to look up. These ids are in the form of ULIDs and are sometimes called player_ulid or similar
+    * @param LegacyPlayerIdsToLookUp A list of legacy ids of players to look up. These ids are in the form of integers and are sometimes called simply player_id or id
+    * @param PlayerPublicUidsToLookUp A list of public uids to look up. These ids are in the form of UIDs
+    * @param OnCompletedRequest Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Players")
+    static void ListPlayerInfo(TArray<FString> PlayerIdsToLookUp, TArray<int> PlayerLegacyIdsToLookUp, TArray<FString> PlayerPublicUidsToLookUp, const FLootLockerListPlayerInfoResponseBP& OnCompletedRequest);
+
+    /**
      * Get general information about the current current player, such as the XP, Level information and their account balance.
-     * https://ref.lootlocker.io/game-api/#get-player-info
+     * https://ref.lootlocker.com/game-api/#get-player-info
      *
      * @param OnGetPlayerInfoRequestComplete Delegate for handling the response
      */
+    [[deprecated("This function is deprecated, use GetCurrentPlayerInfo instead")]]
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Players")
     static void GetPlayerInfo(const FPInfoResponseBP& OnGetPlayerInfoRequestComplete);
 
     /**
     * Get a paginated list of the players inventory.
-    * https://ref.lootlocker.io/game-api/#get-inventory-list
+    * https://ref.lootlocker.com/game-api/#get-inventory-list
     *
     * @param OnGetInventoryRequestCompleted Delegate for handling the the server response.
     */
@@ -501,22 +537,24 @@ public:
 
     /**
     * Receive xp, and award it to the player.
-    * https://ref.lootlocker.io/game-api/#submit-xp
+    * https://ref.lootlocker.com/game-api/#submit-xp
     *
     * @param Points Number of XP points to grant to the player.
     * @param OnSubmitXPRequestCompleted Delegate for handling the the server response.
     */
+    [[deprecated("This function will be removed at a later stage, use the new progression system instead")]]
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Players")
     static void SubmitXP(int Points, const FPSubmitResponseBP& OnSubmitXPRequestCompleted);
 
     /**
     * Get other players XP and level.
-    * https://ref.lootlocker.io/game-api/#get-other-players-xp-and-level
+    * https://ref.lootlocker.com/game-api/#get-other-players-xp-and-level
     *
     * @param OtherPlayerId Other players id.
     * @param OnGetOtherPlayersXpAndLevelRequestCompleted Delegate for handling the the server response.
     * @param OtherPlayerPlatform Optional parameter to specify which platform the Id is for.
     */
+    [[deprecated("This function is deprecated, use ListPlayerInfo instead")]]
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Players")
     static void GetOtherPlayersXpAndLevel(FString OtherPlayerId, const FPOtherPlayersXpAndLevelBP& OnGetOtherPlayersXpAndLevelRequestCompleted, FString OtherPlayerPlatform = FString(TEXT("")));
 
@@ -528,12 +566,13 @@ public:
     * @param PlayerIDs Lost of player ids on the specified platform.
     * @param OnGetOtherPlayerInfoRequestCompleted Delegate for handling the the server response.
 	*/
+    [[deprecated("This function is deprecated, use ListPlayerInfo instead")]]
 	UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Players")
      static void GetMultiplePlayersXp(FString Platform, TArray<FString> PlayerIDs, const  FPMultiplePlayersXPBP& OnGetOtherPlayerInfoRequestCompleted);
 
     /**
     * Get assets that have been granted to the player since the last time this endpoint was called.
-    * https://ref.lootlocker.io/game-api/#player-asset-notifications
+    * https://ref.lootlocker.com/game-api/#player-asset-notifications
     *
     * @param OnCheckPlayerAssetDeactivationNotificationRequestCompleted Delegate for handling the the server response.
     */
@@ -542,7 +581,7 @@ public:
 
     /**
     * This endpoint will return the amount of credits the current player have on their account.
-    * https://ref.lootlocker.io/game-api/#get-currency-balance
+    * https://ref.lootlocker.com/game-api/#get-currency-balance
     *
     * @param OnGetCurrencyBalance Delegate for handling the the server response.
     */
@@ -553,7 +592,7 @@ public:
     * This endpoint will initiate a DLC migration for the current player. 5 minutes after calling this endpoint you should issue
     * a call to the Player Asset Notifications call, to get the results of the migration, if any.
     *
-    * https://ref.lootlocker.io/game-api/#initiate-dlc-migration
+    * https://ref.lootlocker.com/game-api/#initiate-dlc-migration
     *
     * @param OnInitiateDlcMigration Delegate for handling the the server response.
     */
@@ -563,7 +602,7 @@ public:
     /**
     * This endpoint will return a list of DLC's migrated for the player. The DLC identifiers returned
     * will be the ones of the platform the DLC belongs to. The identifier will always be a string, even if the identifier is numeric.
-    * https://ref.lootlocker.io/game-api/#get-dlcs-migrated
+    * https://ref.lootlocker.com/game-api/#get-dlcs-migrated
     *
     * @param OnGotDlcMigration Delegate for handling the the server response.
     */
@@ -573,7 +612,7 @@ public:
     /**
     * This endpoint will set the players profile to private. This means that their
     * inventory will not be displayed publicly on Steam and other places.
-    * https://ref.lootlocker.io/game-api/#set-profile-private
+    * https://ref.lootlocker.com/game-api/#set-profile-private
     *
     * @param OnProfileSetPrivate Delegate for handling the the server response.
     */
@@ -583,7 +622,7 @@ public:
     /**
     * This endpoint will set the players profile to public. This means that their inventory will be
     * displayed publicly on Steam and other places.
-    * https://ref.lootlocker.io/game-api/#set-profile-public
+    * https://ref.lootlocker.com/game-api/#set-profile-public
     *
     * @param OnProfileSetPublic Delegate for handling the the server response.
     */
@@ -592,7 +631,7 @@ public:
 
    /**
    * This endpoint will set the players name.
-   * https://ref.lootlocker.io/game-api/#set-player-name
+   * https://ref.lootlocker.com/game-api/#set-player-name
    *
    * @param Name String name to set.
    * @param OnSetPlayerName Delegate for handling the the server response.
@@ -602,7 +641,7 @@ public:
 
     /**
     * This endpoint will get the players name.
-    * https://ref.lootlocker.io/game-api/#get-player-name
+    * https://ref.lootlocker.com/game-api/#get-player-name
     *
     * @param OnGetPlayerName Delegate for handling the the server response.
     */
@@ -640,7 +679,7 @@ public:
 
     //==================================================
     //Files
-	// https://ref.lootlocker.io/game-api/#player-files
+	// https://ref.lootlocker.com/game-api/#player-files
     //==================================================
 
     /**
@@ -965,7 +1004,7 @@ public:
 
     /**
     * This call will return all characters loadouts for a game, and have some additional information on the characters.
-    * https://ref.lootlocker.io/game-api/#character-loadouts
+    * https://ref.lootlocker.com/game-api/#character-loadouts
     *
     * @param OnGetCharacterLoadoutRequestCompleted Delegate for handling the server response.
     */
@@ -974,7 +1013,7 @@ public:
 
     /**
      * This endpoint lets you set a character as default, and set the name of the character.
-     * https://ref.lootlocker.io/game-api/#update-character
+     * https://ref.lootlocker.com/game-api/#update-character
      *
      * @param CharacterId Id of the character to make the update for
      * @param IsDefault Should the character be set as default
@@ -988,7 +1027,7 @@ public:
      * Create a character of the specified character type with the given name
      * If IsDefault is set to true, the new character will be made the default character.
      * See List Character Types to get your games Character Types.
-     * https://ref.lootlocker.io/game-api/#create-character
+     * https://ref.lootlocker.com/game-api/#create-character
      *
      * @param IsDefault If this should be set as the default character.
      * @param CharacterName The name of the character.
@@ -1000,7 +1039,7 @@ public:
 
     /**
      * Call this endpoint to list the character types configured for your game.
-     * https://ref.lootlocker.io/game-api/#list-character-types
+     * https://ref.lootlocker.com/game-api/#list-character-types
      *
      * @param OnCompletedRequestBP Delegate for handling the server response.
      */
@@ -1017,7 +1056,7 @@ public:
     static void ListPlayerCharacters(const FPLootLockerListPlayerCharactersResponseBP& OnCompletedRequestBP);
     /**
      * Equip an asset to the default character.
-     * https://ref.lootlocker.io/game-api/#equip-asset-to-default-character
+     * https://ref.lootlocker.com/game-api/#equip-asset-to-default-character
      *
      * @param InstanceId The asset's instance_id that is returned from the inventory and loadout calls.
      * @param OnEquipAssetToDefaultCharacterRequestCompleted Delegate for handling the server response.
@@ -1027,7 +1066,7 @@ public:
 
     /**
     * Equip an asset to the specified character.
-    * https://ref.lootlocker.io/game-api/#equip-asset-to-character-by-id
+    * https://ref.lootlocker.com/game-api/#equip-asset-to-character-by-id
     *
     * @param CharacterId ID of the character to equip an asset to.
     * @param AssetId the asset's instance_id that is returned from the inventory and loadout calls.
@@ -1039,7 +1078,7 @@ public:
 
     /**
      * Equip an asset to the specified character.
-     * https://ref.lootlocker.io/game-api/#equip-asset-to-character-by-id
+     * https://ref.lootlocker.com/game-api/#equip-asset-to-character-by-id
      *
      * @param CharacterId ID of the character to equip an asset to.
      * @param InstanceId the asset's instance_id that is returned from the inventory and loadout calls.
@@ -1050,7 +1089,7 @@ public:
 
     /**
      * Unequip an asset from the default character.
-     * https://ref.lootlocker.io/game-api/#unequip-asset-to-default-character
+     * https://ref.lootlocker.com/game-api/#unequip-asset-to-default-character
      *
      * @param InstanceId the asset's instance id that is returned from the inventory and loadout calls.
      * @param OnUnEquipAssetToDefaultCharacterRequestCompleted Delegate for handling the server response.
@@ -1060,7 +1099,7 @@ public:
 
     /**
      * Unequip an asset from the specified character.
-     * https://ref.lootlocker.io/game-api/#unequip-asset-to-character-by-id
+     * https://ref.lootlocker.com/game-api/#unequip-asset-to-character-by-id
      *
      * @param CharacterId ID of the character to unequip an asset from.
      * @param InstanceId the asset's instance id that is returned from the inventory and loadout calls.
@@ -1072,7 +1111,7 @@ public:
 
     /**
      * Getting the current loadout will return an array of assets that the user currently has equipped.
-     * https://ref.lootlocker.io/game-api/#get-current-loadout-to-default-character
+     * https://ref.lootlocker.com/game-api/#get-current-loadout-to-default-character
      *
      * @param OnGetCurrentLoadoutToDefaultCharacterRequestCompleted Delegate for handling the server response.
      */
@@ -1081,7 +1120,7 @@ public:
 
     /**
      * This method will return the exact same response as the GetCharacterLoadout, except that it will be for another player.
-     * https://ref.lootlocker.io/game-api/#get-other-players-loadout-to-default-character
+     * https://ref.lootlocker.com/game-api/#get-other-players-loadout-to-default-character
      *
      * @param OtherPlayerId other player's ID on the requested platform.
      * @param OnGetOtherPlayersCurrentLoadoutToDefaultCharacterRequestCompleted Delegate for handling the server response.
@@ -1092,7 +1131,7 @@ public:
 
     /**
      * Get the contexts that the player's default character can equip.
-     * https://ref.lootlocker.io/game-api/#get-equippable-contexts-to-default-character
+     * https://ref.lootlocker.com/game-api/#get-equippable-contexts-to-default-character
      *
      * @param OnGetEquipableContextsToDefaultCharacterRequestCompleted Delegate for handling the server response.
      */
@@ -1101,7 +1140,7 @@ public:
 
     /**
      * Get the contexts that the specified player's default character can equip.
-     * https://ref.lootlocker.io/game-api/#get-equippable-contexts-by-character-id
+     * https://ref.lootlocker.com/game-api/#get-equippable-contexts-by-character-id
      *
      * @param OtherCharacterId other player's ID.
      * @param OnGetEquipableContextsByCharacterIdRequestCompleted Delegate for handling the server response.
@@ -1183,7 +1222,9 @@ public:
 
     /**
      * This call returns all key/value pairs on record for the current player, beware that it may be a lot of data.
-     * https://ref.lootlocker.io/game-api/#get-entire-persistent-storage
+     * https://ref.lootlocker.com/game-api/#get-entire-persistent-storage
+     * Note: The Player Metadata feature will over time replace Player Persistent Storage.
+     * If you are not already deeply integrated with the Player Persistent Storage in your game, consider moving to Player Metadata. 
      *
      * @param OnPersistentStorageItemsRequestCompleted Delegate for handling the server response.
      */
@@ -1192,7 +1233,9 @@ public:
 
     /**
      * Get Key/Value pair from the player's persistent storage.
-     * https://ref.lootlocker.io/game-api/#get-a-single-key-from-persistent-storage
+     * https://ref.lootlocker.com/game-api/#get-a-single-key-from-persistent-storage
+     * Note: The Player Metadata feature will over time replace Player Persistent Storage.
+     * If you are not already deeply integrated with the Player Persistent Storage in your game, consider moving to Player Metadata.
      *
      * @param Key Key of the key/value pair.
      * @param OnPersistentStorageItemRequestCompleted Delegate for handling the server response.
@@ -1202,7 +1245,9 @@ public:
 
     /**
      * Create/Update key/value pair(s).
-     * https://ref.lootlocker.io/game-api/#updating-creating-key-value-pairs
+     * https://ref.lootlocker.com/game-api/#updating-creating-key-value-pairs
+     * Note: The Player Metadata feature will over time replace Player Persistent Storage.
+     * If you are not already deeply integrated with the Player Persistent Storage in your game, consider moving to Player Metadata.
      *
      * @param Items array of items to be created/updated.
      * @param OnPersistentStorageItemsAddRequestCompleted Delegate for handling the server response.
@@ -1212,7 +1257,9 @@ public:
 
     /**
      * Create/Update a key/value pair.
-     * https://ref.lootlocker.io/game-api/#updating-creating-key-value-pairs
+     * https://ref.lootlocker.com/game-api/#updating-creating-key-value-pairs
+     * Note: The Player Metadata feature will over time replace Player Persistent Storage.
+     * If you are not already deeply integrated with the Player Persistent Storage in your game, consider moving to Player Metadata.
      *
      * @param Item item to be created/updated.
      * @param OnPersistentStorageItemAddRequestCompleted Delegate for handling the server response.
@@ -1222,7 +1269,9 @@ public:
 
     /**
      * Delete a key/value pair.
-     * https://ref.lootlocker.io/game-api/#deleting-a-key-value-pair
+     * https://ref.lootlocker.com/game-api/#deleting-a-key-value-pair
+     * Note: The Player Metadata feature will over time replace Player Persistent Storage.
+     * If you are not already deeply integrated with the Player Persistent Storage in your game, consider moving to Player Metadata.
      *
      * @param Key key of a key/value pair.
      * @param OnPersistentStorageItemDeleteRequestCompleted Delegate for handling the server response.
@@ -1232,7 +1281,9 @@ public:
 
     /**
      * Read another players public key/value storage.
-     * https://ref.lootlocker.io/game-api/#getting-other-players-public-key-value-pairs
+     * https://ref.lootlocker.com/game-api/#getting-other-players-public-key-value-pairs
+     * Note: The Player Metadata feature will over time replace Player Persistent Storage.
+     * If you are not already deeply integrated with the Player Persistent Storage in your game, consider moving to Player Metadata.
      *
      * @param PlayerId players id or their public UID.
      * @param OnGetPlayerPersistentStorageRequestCompleted Delegate for handling the server response.
@@ -1246,7 +1297,7 @@ public:
 
     /**
      * Get all the contexts the game has.
-     * https://ref.lootlocker.io/game-api/#getting-contexts
+     * https://ref.lootlocker.com/game-api/#getting-contexts
      *
      * @param OnGetContextsRequestCompleted Delegate for handling the server response.
      */
@@ -1255,7 +1306,7 @@ public:
 
     /**
      * Get all assets in a paginated form.
-     * https://ref.lootlocker.io/game-api/#getting-asset-list
+     * https://ref.lootlocker.com/game-api/#getting-asset-list
      *
      * @param OnGetAssetsRequestCompleted Delegate for handling the server response.
      * @param StartFromIndex Optional: Index of the item to start from, defaults to 0
@@ -1269,7 +1320,7 @@ public:
 
     /**
      * Retrieve only specific Assets by their ID's.
-     * https://ref.lootlocker.io/game-api/#getting-assets-by-ids
+     * https://ref.lootlocker.com/game-api/#getting-assets-by-ids
      *
      * @param AssetIds Array of the asset ID's to be fetched.
      * @param OnGetAssetsByIdsRequestCompleted Delegate for handling the server response.
@@ -1280,7 +1331,7 @@ public:
     /**
      * This call will return you all the default bones.
      * If a binding overrides anything on a bone, it will be returned along with the binding.
-     * https://ref.lootlocker.io/game-api/#getting-asset-bone-information
+     * https://ref.lootlocker.com/game-api/#getting-asset-bone-information
      *
      * @param OnGetAssetBonesRequestCompleted Delegate for handling the server response.
      */
@@ -1289,7 +1340,7 @@ public:
 
     /**
      * List the current players favourite assets.
-     * https://ref.lootlocker.io/game-api/#listing-favourite-assets
+     * https://ref.lootlocker.com/game-api/#listing-favourite-assets
      *
      * @param OnGetFavouriteAssetIndicesRequestCompleted Delegate for handling the server response.
      */
@@ -1298,7 +1349,7 @@ public:
 
     /**
      * Add an asset to the list of favourites.
-     * https://ref.lootlocker.io/game-api/#adding-favourite-assets
+     * https://ref.lootlocker.com/game-api/#adding-favourite-assets
      *
      * @param AssetId Asset ID to be added.
      * @param OnAddAssetToFavouritesRequestCompleted Delegate for handling the server response.
@@ -1308,7 +1359,7 @@ public:
 
     /**
      * Remove an asset from the list of favourites.
-     * https://ref.lootlocker.io/game-api/#removing-favourite-assets
+     * https://ref.lootlocker.com/game-api/#removing-favourite-assets
      *
      * @param AssetId asset ID to be removed.
      * @param OnRemoveAssetFromFavouritesRequestCompleted Delegate for handling the server response.
@@ -1318,7 +1369,7 @@ public:
 
     /**
      * This call offers a paginated list of the games universal assets
-     * https://ref.lootlocker.io/game-api/#get-universal-assets
+     * https://ref.lootlocker.com/game-api/#get-universal-assets
      *
      * @param After Last universal id to start after.
      * @param ItemsCount Number of items to receive (50-200).
@@ -1355,7 +1406,7 @@ public:
 
     /**
      * Get all key/value pairs for an asset instance.
-     * https://ref.lootlocker.io/game-api/#getting-all-key-value-pairs-to-an-instance
+     * https://ref.lootlocker.com/game-api/#getting-all-key-value-pairs-to-an-instance
      *
      * @param AssetInstanceId asset instance ID.
      * @param OnGetAllKeyValuePairsForAssetInstanceCompleted Delegate for handling the server response.
@@ -1365,7 +1416,7 @@ public:
 
     /**
      * Get a key/value pair for an asset instance.
-     * https://ref.lootlocker.io/game-api/#getting-a-key-value-pair-by-id
+     * https://ref.lootlocker.com/game-api/#getting-a-key-value-pair-by-id
      *
      * @param AssetInstanceId asset instance ID.
      * @param StorageItemId ID of the key/value pair.
@@ -1376,7 +1427,7 @@ public:
 
     /**
      * Create a key/value pair for an asset instance.
-     * https://ref.lootlocker.io/game-api/#creating-a-key-value-pair
+     * https://ref.lootlocker.com/game-api/#creating-a-key-value-pair
      *
      * @param AssetInstanceId asset instance ID.
      * @param Item key/value pair.
@@ -1387,7 +1438,7 @@ public:
 
     /**
      * Update key/value pairs for an asset instance.
-     * https://ref.lootlocker.io/game-api/#updating-one-or-more-key-value-pairs
+     * https://ref.lootlocker.com/game-api/#updating-one-or-more-key-value-pairs
      *
      * @param AssetInstanceId asset instance ID.
      * @param Items key/value pairs.
@@ -1398,7 +1449,7 @@ public:
 
     /**
      * Update a key/value pair for an asset instance.
-     * https://ref.lootlocker.io/game-api/#updating-a-key-value-pair-by-id
+     * https://ref.lootlocker.com/game-api/#updating-a-key-value-pair-by-id
      *
      * @param AssetInstanceId asset instance ID.
      * @param StorageItemId key/value pair ID.
@@ -1410,7 +1461,7 @@ public:
 
     /**
      * Delete a key/value pair for an asset instance.
-     * https://ref.lootlocker.io/game-api/#delete-a-key-value-pair
+     * https://ref.lootlocker.com/game-api/#delete-a-key-value-pair
      *
      * @param AssetInstanceId asset instance ID.
      * @param StorageItemId key/value pair ID.
@@ -1421,7 +1472,7 @@ public:
 
     /**
      * Get the drop rates for a loot box asset instance.
-     * https://ref.lootlocker.io/game-api/#inspect-a-loot-box
+     * https://ref.lootlocker.com/game-api/#inspect-a-loot-box
      *
      * @param AssetInstanceId asset instance ID.
      * @param OnInspectLootBoxCompleted Delegate for handling the server response.
@@ -1432,7 +1483,7 @@ public:
     /**
      * Open a loot box asset instance.
      * The loot box will be consumed and the contents will be added to the player's inventory.
-     * https://ref.lootlocker.io/game-api/#open-a-loot-box
+     * https://ref.lootlocker.com/game-api/#open-a-loot-box
      *
      * @param AssetInstanceId asset instance ID.
      * @param OnOpenLootBoxCompleted Delegate for handling the server response.
@@ -1456,7 +1507,7 @@ public:
 
     /**
      * Create an asset candidate.
-     * https://ref.lootlocker.io/game-api/#creating-an-asset-candidate
+     * https://ref.lootlocker.com/game-api/#creating-an-asset-candidate
      *
      * @param AssetCandidateData asset candidate data.
      * @param OnCreateAssetCandidateCompleted Delegate for handling the server response.
@@ -1465,8 +1516,18 @@ public:
     static void CreateAssetCandidate(const FLootLockerCreateAssetCandidateData& AssetCandidateData, const FCreateAssetCandidateResponseDelegateBP& OnCreateAssetCandidateCompleted);
 
     /**
+     * Create an asset candidate and immediately mark it as completed
+     * https://ref.lootlocker.com/game-api/#creating-an-asset-candidate
+     *
+     * @param AssetCandidateData asset candidate data.
+     * @param OnCreateAssetCandidateCompleted Delegate for handling the server response.
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | User Generated Content")
+    static void CreateAssetCandidateAndMarkComplete(const FLootLockerCreateAssetCandidateData& AssetCandidateData, const FCreateAssetCandidateResponseDelegateBP& OnCreateAssetCandidateCompleted);
+
+    /**
      * Update an asset candidate.
-     * https://ref.lootlocker.io/game-api/#updating-an-asset-candidate
+     * https://ref.lootlocker.com/game-api/#updating-an-asset-candidate
      *
      * @param AssetCandidateId ID of the asset candidate.
      * @param AssetCandidateData asset candidate data.
@@ -1477,7 +1538,7 @@ public:
 
     /**
      * Delete an asset candidate.
-     * https://ref.lootlocker.io/game-api/#deleting-an-asset-candidate
+     * https://ref.lootlocker.com/game-api/#deleting-an-asset-candidate
      *
      * @param AssetCandidateId ID of the asset candidate.
      * @param OnDeleteAssetCandidateCompleted Delegate for handling the server response.
@@ -1487,7 +1548,7 @@ public:
 
     /**
      * Get all asset candidates.
-     * https://ref.lootlocker.io/game-api/#listing-asset-candidates
+     * https://ref.lootlocker.com/game-api/#listing-asset-candidates
      *
      * @param OnGetAllAssetCandidatesCompleted Delegate for handling the server response.
      */
@@ -1496,7 +1557,7 @@ public:
 
     /**
      * Get an asset candidate.
-     * https://ref.lootlocker.io/game-api/#getting-a-single-asset-candidate
+     * https://ref.lootlocker.com/game-api/#getting-a-single-asset-candidate
      *
      * @param AssetCandidateId ID of the asset candidate.
      * @param OnGetAssetCandidateCompleted Delegate for handling the server response.
@@ -1506,7 +1567,7 @@ public:
 
     /**
      * Add a file to an asset candidate.
-     * https://ref.lootlocker.io/game-api/#adding-files-to-asset-candidates
+     * https://ref.lootlocker.com/game-api/#adding-files-to-asset-candidates
      *
      * @param AssetCandidateId ID of the asset candidate.
      * @param FilePath full absolute path to a file.
@@ -1518,7 +1579,7 @@ public:
 
     /**
      * Remove a file from an asset candidate.
-     * https://ref.lootlocker.io/game-api/#removing-files-from-an-asset-candidate
+     * https://ref.lootlocker.com/game-api/#removing-files-from-an-asset-candidate
      *
      * @param AssetCandidateId ID of the asset candidate.
      * @param FileId ID of the file.
@@ -1634,7 +1695,7 @@ public:
 
     /**
      * Get all missions.
-     * https://ref.lootlocker.io/game-api/#getting-all-missions
+     * https://ref.lootlocker.com/game-api/#getting-all-missions
      *
      * @param OnGetAllMissionsCompleted Delegate for handling the server response.
      */
@@ -1643,7 +1704,7 @@ public:
 
     /**
      * Get a mission.
-     * https://ref.lootlocker.io/game-api/#getting-a-single-mission
+     * https://ref.lootlocker.com/game-api/#getting-a-single-mission
      *
      * @param MissionId mission ID.
      * @param OnGetMissionCompleted Delegate for handling the server response.
@@ -1653,7 +1714,7 @@ public:
 
     /**
      * Start a mission.
-     * https://ref.lootlocker.io/game-api/#starting-mission
+     * https://ref.lootlocker.com/game-api/#starting-mission
      *
      * @param MissionId mission ID.
      * @param OnStartMissionCompleted Delegate for handling the server response.
@@ -1663,7 +1724,7 @@ public:
 
     /**
      * Finish a mission.
-     * https://ref.lootlocker.io/game-api/#finishing-mission
+     * https://ref.lootlocker.com/game-api/#finishing-mission
      *
      * @param MissionId mission ID.
      * @param MissionData mission completion data.
@@ -1679,7 +1740,7 @@ public:
 
     /**
      * Get maps data.
-     * https://ref.lootlocker.io/game-api/#getting-all-maps
+     * https://ref.lootlocker.com/game-api/#getting-all-maps
      *
      * @param OnGetMapsCompleted Delegate for handling the server response.
      */
@@ -1695,7 +1756,7 @@ public:
      * Purchase an asset
      * If your game uses soft currency, it will check the players account balance and grant the assets to the player if there is coverage.
      * If there is no coverage, an error will be returned.
-     * https://ref.lootlocker.io/game-api/#purchase-call
+     * https://ref.lootlocker.com/game-api/#purchase-call
      *
      * @param PurchaseData Data about the assets to be purchased.
      * @param OnPurchaseAssetsCompleted Delegate for handling the server response.
@@ -1705,7 +1766,7 @@ public:
 
     /**
      * Platform-specific purchase call for Android.
-     * https://ref.lootlocker.io/game-api/#android-in-app-purchases
+     * https://ref.lootlocker.com/game-api/#android-in-app-purchases
      *
      * @param PurchaseData Data about the assets to be purchased.
      * @param OnPurchaseAssetsAndroidCompleted Delegate for handling the server response.
@@ -1715,7 +1776,7 @@ public:
 
     /**
      * Platform-specific purchase call for iOS.
-     * https://ref.lootlocker.io/game-api/#ios-in-app-purchases
+     * https://ref.lootlocker.com/game-api/#ios-in-app-purchases
      *
      * @param PurchaseData data about the assets to be purchased.
      * @param OnPurchaseAssetsIOSCompleted Delegate for handling the server response.
@@ -1726,7 +1787,7 @@ public:
     /**
      * Get the status of an order.
      * If you get a response that is considered final, you should issue a call to the player inventory endpoint if you're in a context where the inventory might change.
-     *  https://ref.lootlocker.io/game-api/#polling-order-status
+     *  https://ref.lootlocker.com/game-api/#polling-order-status
      *
      * @param PurchaseId ID of the purchase order.
      * @param OnPollingStatusCompleted Delegate for handling the server response.
@@ -1737,7 +1798,7 @@ public:
     /**
      * Activates specified rental asset
      * Once you have purchased a rental asset, you need to activate the rental for it to become available for the player.
-     * https://ref.lootlocker.io/game-api/#activating-a-rental-asset
+     * https://ref.lootlocker.com/game-api/#activating-a-rental-asset
      *
      * @param AssetInstanceId ID of the asset.
      * @param OnActivateRentalAssetCompleted Delegate for handling the server response.
@@ -1881,22 +1942,125 @@ public:
 
     /**
      * Trigger an event.
-     * https://ref.lootlocker.io/game-api/#triggering-an-event
+     * https://ref.lootlocker.com/game-api/#triggering-an-event
      *
      * @param Event data of the event to be triggered.
      * @param OnTriggerEventCompleted Delegate for handling the server response.
      */
-    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Trigger Events")
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Trigger Events", meta = (DeprecatedFunction, DeprecationMessage = "The triggers system has been upgraded and replaced with a newer version. Read more here: https://docs.lootlocker.com/game-systems/triggers"))
     static void TriggerEvent(const FLootLockerTriggerEvent& Event, const FTriggerEventResponseDelegateBP& OnTriggerEventCompleted);
 
     /**
      * This endpoint lists the triggers that a player have already completed.
-     * https://ref.lootlocker.io/game-api/#listing-triggered-trigger-events
+     * https://ref.lootlocker.com/game-api/#listing-triggered-trigger-events
      *
      * @param OnGetTriggeredEventsCompleted Delegate for handling the server response.
      */
-    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Trigger Events")
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Trigger Events", meta = (DeprecatedFunction, DeprecationMessage = "The triggers system has been upgraded and replaced with a newer version. Read more here: https://docs.lootlocker.com/game-systems/triggers"))
     static void GetTriggeredEvents(const FTriggersResponseDelegateBP& OnGetTriggeredEventsCompleted);
+
+    //==================================================
+    // Triggers
+    //==================================================
+
+    /**
+     * Invoke a set of triggers by key
+     *
+     * Note that the response contains two lists:
+     * - One listing the keys of the triggers that were successfully executed
+     * - One listing the triggers that failed as well as the reason they did so
+     *
+     * This means that the request can "succeed" but still contain triggers that failed. So make sure to check the inner results.
+     *
+     * @param KeysToInvoke List of keys of the triggers to invoke
+     * @param OnComplete Delegate for handling the server response.
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Triggers")
+    static void InvokeTriggersByKey(const TArray<FString>& KeysToInvoke, const FLootLockerInvokeTriggersByKeyResponseBP& OnComplete);
+
+    //==================================================
+    // Notifications
+    //==================================================
+
+    /**
+     List notifications without filters and with default pagination settings
+    
+     @param OnComplete Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static void ListNotificationsWithDefaultParameters(const FLootLockerListNotificationsResponseBP& OnComplete);
+
+    /**
+     List notifications according to specified filters and with pagination settings
+
+     @param ShowRead Return previously read notifications
+     @param OfType (Optional) Return only notifications with the specified type
+     @param WithSource (Optional) Return only notifications with the specified source
+     @param PerPage (Optional) Used together with PerPage to apply pagination to this request. Page designates which "page" of items to fetch
+     @param Page (Optional) Used together with Page to apply pagination to this request. PerPage designates how many notifications are considered a "page"
+     @param OnComplete Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static void ListNotifications(bool ShowRead, const FString& OfType, const FString& WithSource, int PerPage, int Page, const FLootLockerListNotificationsResponseBP& OnComplete);
+
+    /**
+     List notifications according to specified filters and with pagination settings
+
+     @param WithPriority Return only notifications with the specified priority
+     @param ShowRead Return previously read notifications
+     @param OfType (Optional) Return only notifications with the specified type
+     @param WithSource (Optional) Return only notifications with the specified source
+     @param PerPage (Optional) Used together with PerPage to apply pagination to this request. Page designates which "page" of items to fetch
+     @param Page (Optional) Used together with Page to apply pagination to this request. PerPage designates how many notifications are considered a "page"
+     @param OnComplete Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static void ListNotificationsWithPriority(ELootLockerNotificationPriority WithPriority, bool ShowRead, const FString& OfType, const FString& WithSource, int PerPage, int Page, const FLootLockerListNotificationsResponseBP& OnComplete);
+
+    /**
+     Mark all unread notifications as read
+
+	 Warning: This will mark ALL unread notifications as read, so if you have listed notifications but due to filters and/or pagination not pulled all of them you may have unviewed unread notifications
+
+     @param OnComplete Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static void MarkAllNotificationsAsRead(const FLootLockerReadNotificationsResponseBP& OnComplete);
+
+    /**
+     Mark the specified notifications as read (if they are currently unread)
+
+     @param Notifications List of ids of notifications to mark as read
+     @param OnComplete Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static void MarkNotificationsAsRead(const TArray<FLootLockerNotification>& Notifications, const FLootLockerReadNotificationsResponseBP& OnComplete);
+
+    /**
+     Mark the specified notifications as read
+
+     @param NotificationIDs List of ids of notifications to mark as read
+     @param OnComplete Delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static void MarkNotificationsAsReadByIds(const TArray<FString>& NotificationIDs, const FLootLockerReadNotificationsResponseBP& OnComplete);
+
+    /**
+    * Get notifications by their identifying value. The out is an array because many notifications are not unique. For example triggers that can be triggered multiple times.
+    * For Triggers the identifying value is the key of the trigger
+    * For Google Play Store purchases it is the product id
+    * For Apple App Store purchases it is the transaction id
+    * For Steam Store purchases it is the entitlement id
+    * For LootLocker virtual purchases it is the catalog item id
+    * Twitch Drops have no uniquely identifying information, so sending in "twitch_drop" returns all twitch drop notifications
+    *
+    * @param NotificationsResponse The response from which you want to find the notifications.
+    * @param IdentifyingValue The identifying value of the notification you want to fetch.
+    * @param Notifications A list of notifications that were found for the given identifying value or null if none were found.
+    * @returns True if notifications were found for the identifying value. False if notifications couldn't be found for this value or if the underlying lookup table is corrupt.
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Notifications")
+    static bool TryGetNotificationsByIdentifyingValue(const FLootLockerListNotificationsResponse& NotificationsResponse, const FString& IdentifyingValue, TArray<FLootLockerNotification>& Notifications);
 
     //==================================================
     //Collectables
@@ -1905,7 +2069,7 @@ public:
 
     /**
      * This endpoint will return all the collectables a game has set up. It will hold a set of Collectables, with Groups inside which in turn contain Items.
-     * https://ref.lootlocker.io/game-api/#getting-collectables
+     * https://ref.lootlocker.com/game-api/#getting-collectables
      *
      * @param OnGetAllCollectablesCompleted Delegate for handling the server response.
      */
@@ -1914,7 +2078,7 @@ public:
 
     /**
      * Collect an item.
-     * https://ref.lootlocker.io/game-api/#collecting-an-item
+     * https://ref.lootlocker.com/game-api/#collecting-an-item
      *
      * @param Item The slug is a combination of the name of the Collectable, the Group and the Item. Simply concatenate them with a . as a seperator.
      * @param OnCollectItemCompleted Delegate for handling the server response.
@@ -1929,7 +2093,7 @@ public:
 
     /**
      * Get all messages for a player.
-     * https://ref.lootlocker.io/game-api/#get-messages
+     * https://ref.lootlocker.com/game-api/#get-messages
      *
      * @param OnGetMessagesCompleted Delegate for handling the server response.
      */
@@ -1942,8 +2106,18 @@ public:
     //==================================================
 
     /**
+     * List leaderboards with details on each leaderboard
+     *
+    * @param Count Optional: The count of items you want to retrieve.
+    * @param After Optional: Used for pagination, id from which the pagination starts from.
+     * @param OnCompletedRequestBP Delegate for handling the server response
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Leaderboard", meta = (AdvancedDisplay = "Count,After", Count = 50, After = 0))
+    static void ListLeaderboards(int Count, int After, const FLootLockerListLeaderboardsResponseBP& OnCompletedRequestBP);
+
+    /**
      * Get rank for single member for a leaderboard. If leaderboard is of type player a player will also be in the response.
-     * https://ref.lootlocker.io/game-api/#get-member-rank
+     * https://ref.lootlocker.com/game-api/#get-member-rank
      *
      * @param LeaderboardKey the key of the leaderboard you want to connect to.
      * @param MemberId the id of player in the leaderboard
@@ -1967,7 +2141,7 @@ public:
 
     /**
      * Get rank for a set of members for a leaderboard. If leaderboard is of type player a player will also be in the response.
-     * https://ref.lootlocker.io/game-api/#get-by-list-of-members
+     * https://ref.lootlocker.com/game-api/#get-by-list-of-members
      *
      * @param Members The ids of all leaderboard members you want to get info on.
      * @param LeaderboardKey the key of the leaderboard you want to connect to.
@@ -1979,7 +2153,7 @@ public:
     /**
      * Get list of members in rank range.
      * Maximum allowed members to query for at a time is currently 2000. If leaderboard is of type player a player will also be in the response.
-     * https://ref.lootlocker.io/game-api/#get-score-list
+     * https://ref.lootlocker.com/game-api/#get-score-list
      *
      * @param LeaderboardKey the key of the leaderboard you want to connect to.
      * @param Count Number of members returned per page
@@ -1992,7 +2166,7 @@ public:
     /**
      * Get list of members in rank range.
      * Maximum allowed members to query for at a time is currently 2000. If leaderboard is of type player a player will also be in the response.
-     * https://ref.lootlocker.io/game-api/#get-score-list
+     * https://ref.lootlocker.com/game-api/#get-score-list
      *
      * @param LeaderboardKey the key of the leaderboard you need to connect to.
      * @param Count Number of members returned per page
@@ -2080,6 +2254,15 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Currency")
     static void ListCurrencies(const FLootLockerListCurrenciesResponseBP& OnCompletedRequest);
+
+    /**
+     * Get details about the specified currency
+     *
+     * @param CurrencyCode The code of the currency to get details for
+     * @param OnCompletedRequest Delegate for handling the server response
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Currency")
+    static void GetCurrencyDetails(const FString& CurrencyCode, const FLootLockerGetCurrencyDetailsResponseBP& OnCompletedRequest);
 
     /**
      * Get a list of the denominations available for a specific currency
@@ -2224,15 +2407,16 @@ public:
     * @param Ulid is the ulid of who you're giving feedback about
     * @param Description is the text/reason of your feedback ("He is hacking", "He is a kind player!")
     * @param CategoryID is the ID of the category you're using for your feedback, use ListFeedbackCategories function to get the ids.
+    * @param OnComplete delegate for handling the server response
     */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Feedback")
     static void SendPlayerFeedback(const FString& Ulid, const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseBP& OnComplete);
 
     /**
     * Send feedback about the game
-    * @param Ulid is the ulid of who you're giving feedback about
     * @param Description is the text/reason of your feedback ("Amazing game", "I found a bug here!")
     * @param CategoryID is the ID of the category you're using for your feedback, use ListFeedbackCategories function to get the ids.
+    * @param OnComplete delegate for handling the server response
     */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Feedback")
     static void SendGameFeedback(const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseBP& OnComplete);
@@ -2242,9 +2426,188 @@ public:
     * @param Ulid is the ulid of the asset you're giving feedback about
     * @param Description is the text/reason of your feedback ("Amazing Level", "I found a bug here!")
     * @param CategoryID is the ID of the category you're using for your feedback, use ListFeedbackCategories function to get the ids.
+    * @param OnComplete delegate for handling the server response
     */
     UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Feedback")
     static void SendUGCFeedback(const FString& Ulid, const FString& Description, const FString& CategoryID, const FLootLockerSendFeedbackResponseBP& OnComplete);
+
+    //==================================================
+    // Metadata
+    //==================================================
+
+    /**
+    List the requested page of Metadata for the specified source with the specified pagination (if you don't specify pagination settings then default pagination will be used)
+
+    @param Source The source type for which to request metadata
+    @param SourceID The specific source id for which to request metadata, note that if the source is self then this too should be set to "self"
+    @param Page Optional: Used together with PerPage to apply pagination to this request. Page designates which "page" of items to fetch
+    @param PerPage Optional: Used together with Page to apply pagination to this request.PerPage designates how many items are considered a "page"
+    @param IgnoreFiles Optional: Base64 values will be set to content_type "application/x-redacted" and the content will be an empty String. Use this to avoid accidentally fetching large data files.
+    @param OnComplete delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Page,PerPage,IgnoreFiles", Page=-1, PerPage=-1, IgnoreFiles=false))
+    static void ListMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const int Page, const int PerPage, const bool IgnoreFiles, const FLootLockerListMetadataResponseBP& OnComplete);
+
+    /**
+    List the requested page of Metadata for the specified source that has all of the provided tags and paginate according to the supplied pagination settings (if you don't specify pagination settings then default pagination will be used)
+
+    @param Source The source type for which to request metadata
+    @param SourceID The specific source id for which to request metadata, note that if the source is self then this too should be set to "self"
+    @param Tags The tags that the requested metadata should have, only metadata matching *all of* the given tags will be returned
+    @param Page Optional: Used together with PerPage to apply pagination to this request. Page designates which "page" of items to fetch
+    @param PerPage Optional: Used together with Page to apply pagination to this request.PerPage designates how many items are considered a "page"
+    @param IgnoreFiles Optional: Base64 values will be set to content_type "application/x-redacted" and the content will be an empty String. Use this to avoid accidentally fetching large data files.
+    @param OnComplete delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Page,PerPage,Tags,IgnoreFiles", Page = -1, PerPage = -1, IgnoreFiles = false))
+    static void ListMetadataWithTags(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FString>& Tags, const int Page, const int PerPage, const bool IgnoreFiles, const FLootLockerListMetadataResponseBP& OnComplete);
+
+    /**
+    Get Metadata for the specified source with the given key
+
+    @param Source The source type for which to request metadata
+    @param SourceID The specific source id for which to request metadata, note that if the source is self then this too should be set to "self"
+    @param Key The key of the metadata to fetch, use this to fetch metadata for a specific key for the specified source.
+    @param IgnoreFiles Optional: Base64 values will be set to content_type "application/x-redacted" and the content will be an empty String. Use this to avoid accidentally fetching large data files.
+    @param OnComplete delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "IgnoreFiles", IgnoreFiles = false))
+    static void GetMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const FString& Key, const bool IgnoreFiles, const FLootLockerGetMetadataResponseBP& OnComplete);
+
+    /**
+    Get Metadata for the specified keys on the specified sources
+
+    @param SourcesAndKeysToGet The combination of sources to get keys for, and the keys to get for those sources
+    @param IgnoreFiles Optional: Base64 values will be set to content_type "application/x-redacted" and the content will be an empty String. Use this to avoid accidentally fetching large data files.
+    @param OnComplete delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "IgnoreFiles", IgnoreFiles = false))
+    static void GetMultisourceMetadata(const TArray<FLootLockerMetadataSourceAndKeys>& SourcesAndKeysToGet, const bool IgnoreFiles, const FLootLockerGetMultisourceMetadataResponseBP& OnComplete);
+
+    /*
+     Parse a LootLocker Metadata Entry
+
+     This is a convenience node that replaces switching on the metadata type and converting the values manually
+     The output execution pin corresponding to the Entry Type will be triggered at which point the corresponding value pin for that type will be populated.
+     If the entry could not be parsed, the OnError execution pin will be triggered and the ErrorMessage will be populated.
+
+     @param Entry The entry to parse
+     @param MetadataTypeSwitch Generated output execution pins for the possible metadata types
+     @param StringValue The parsed String Value, populated if the OnString output pin was triggered
+     @param IntegerValue The parsed integer Value, populated if the OnInteger output pin was triggered
+     @param FloatValue The parsed decimal Value, populated if the OnFloat output pin was triggered
+     @param NumberString The parsed Number String Value, populated if the OnNumber output pin was triggered
+     @param BoolValue The parsed boolean Value, populated if the OnBool output pin was triggered
+     @param JsonStringValue The parsed Json String Value, populated if the OnJsonString output pin was triggered
+     @param Base64Value The parsed Base64 Value, populated if the OnBase64 output pin was triggered
+     @param ErrorMessage An error message populated if the parsing failed and the OnError output pin was triggered
+     @param OutEntry Outputs a reference to the entry that was parsed for convenience
+     */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Metadata", meta = (ExpandEnumAsExecs = "MetadataTypeSwitch", AdvancedDisplay = "OutEntry"))
+    static void ParseLootLockerMetadataEntry(const FLootLockerMetadataEntry& Entry,
+        ELootLockerMetadataParserOutputTypes& MetadataTypeSwitch,
+        FString& StringValue,
+        int& IntegerValue,
+        float& FloatValue,
+        FString& NumberString,
+        bool& BoolValue,
+        FString& JsonStringValue,
+        FLootLockerMetadataBase64Value& Base64Value,
+        FString& ErrorMessage,
+        FLootLockerMetadataEntry& OutEntry);
+
+    /**
+    Set the provided metadata for the specified source
+
+    Use the provided Make<type>MetadataAction nodes when constructing the array of actions to perform.
+    Note that a subset of the specified operations can fail without the full request failing. Make sure to check the errors array in the response.
+
+    @param Source The source type for which to set metadata
+    @param SourceID The specific source id for which to set metadata
+    @param MetadataToActionsToPerform List of actions to take during this set operation.
+    @param OnComplete delegate for handling the server response
+    */
+    UFUNCTION(BlueprintCallable, Category = "LootLocker Methods | Metadata")
+    static void SetMetadata(const ELootLockerMetadataSources Source, const FString& SourceID, const TArray<FLootLockerSetMetadataAction>& MetadataToActionsToPerform, const FLootLockerSetMetadataResponseBP& OnComplete);
+
+    /**
+    Construct a Metadata Action consisting of a metadata entry with a String value
+
+    @param Action The action to take for this set operation. Update and Delete operations will fail if the key does not exist. Create operation will fail if the key does exist.
+    @param Key The key to perform this action towards
+    @param Value The value to set for the specified key
+    @param Tags The tags to apply to the specified key
+    @param Access The access settings to apply to the specified key. None means that the game api can not read nor write this metadata entry (this is the default). But you can supply either or both of "game_api.read" and "game_api.write"
+    @return A Metadata Action Object that you can use in the method SetMetadata
+    */
+    UFUNCTION(BlueprintPure, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Tags,Access", AutoCreateRefTerm="Tags,Access"))
+    static FLootLockerSetMetadataAction MakeMetadataActionString(ELootLockerMetadataActions Action, const FString& Key, const FString& Value, const TArray<FString>& Tags, const TArray<FString>& Access);
+
+    /**
+    Construct a Metadata Action consisting of a metadata entry with a Decimal value
+
+    @param Action The action to take for this set operation. Update and Delete operations will fail if the key does not exist. Create operation will fail if the key does exist.
+    @param Key The key to perform this action towards
+    @param Value The value to set for the specified key
+    @param Tags The tags to apply to the specified key
+    @param Access The access settings to apply to the specified key. None means that the game api can not read nor write this metadata entry (this is the default). But you can supply either or both of "game_api.read" and "game_api.write"
+    @return A Metadata Action Object that you can use in the method SetMetadata
+    */
+    UFUNCTION(BlueprintPure, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Tags,Access", AutoCreateRefTerm = "Tags,Access"))
+    static FLootLockerSetMetadataAction MakeMetadataActionFloat(ELootLockerMetadataActions Action, const FString& Key, const float& Value, const TArray<FString>& Tags, const TArray<FString>& Access);
+
+    /**
+    Construct a Metadata Action consisting of a metadata entry with an Integer value
+
+    @param Action The action to take for this set operation. Update and Delete operations will fail if the key does not exist. Create operation will fail if the key does exist.
+    @param Key The key to perform this action towards
+    @param Value The value to set for the specified key
+    @param Tags The tags to apply to the specified key
+    @param Access The access settings to apply to the specified key. None means that the game api can not read nor write this metadata entry (this is the default). But you can supply either or both of "game_api.read" and "game_api.write"
+    @return A Metadata Action Object that you can use in the method SetMetadata
+    */
+    UFUNCTION(BlueprintPure, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Tags,Access", AutoCreateRefTerm = "Tags,Access"))
+    static FLootLockerSetMetadataAction MakeMetadataActionInteger(ELootLockerMetadataActions Action, const FString& Key, const int Value, const TArray<FString>& Tags, const TArray<FString>& Access);
+
+    /**
+    Construct a Metadata Action consisting of a metadata entry with a Bool value
+
+    @param Action The action to take for this set operation. Update and Delete operations will fail if the key does not exist. Create operation will fail if the key does exist.
+    @param Key The key to perform this action towards
+    @param Value The value to set for the specified key
+    @param Tags The tags to apply to the specified key
+    @param Access The access settings to apply to the specified key. None means that the game api can not read nor write this metadata entry (this is the default). But you can supply either or both of "game_api.read" and "game_api.write"
+    @return A Metadata Action Object that you can use in the method SetMetadata
+    */
+    UFUNCTION(BlueprintPure, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Tags,Access", AutoCreateRefTerm = "Tags,Access"))
+    static FLootLockerSetMetadataAction MakeMetadataActionBool(ELootLockerMetadataActions Action, const FString& Key, const bool Value, const TArray<FString>& Tags, const TArray<FString>& Access);
+
+    /**
+    Construct a Metadata Action consisting of a metadata entry with a Json value in string format
+
+    @param Action The action to take for this set operation. Update and Delete operations will fail if the key does not exist. Create operation will fail if the key does exist.
+    @param Key The key to perform this action towards
+    @param Value The value to set for the specified key
+    @param Tags The tags to apply to the specified key
+    @param Access The access settings to apply to the specified key. None means that the game api can not read nor write this metadata entry (this is the default). But you can supply either or both of "game_api.read" and "game_api.write"
+    @param Succeeded Output: True if the json string could be parsed as an array or object, false if it could not be parsed
+    @param ConstructedEntry Output: A Metadata Action Object that you can use in the method SetMetadata
+    */
+    UFUNCTION(BlueprintPure, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Tags,Access", AutoCreateRefTerm = "Tags,Access"))
+    static void MakeMetadataActionJson(ELootLockerMetadataActions Action, const FString& Key, const FString& Value, const TArray<FString>& Tags, const TArray<FString>& Access, bool& Succeeded, FLootLockerSetMetadataAction& ConstructedEntry);
+
+    /**
+    Construct a Metadata Action consisting of a metadata entry with a Base64 value
+
+    @param Action The action to take for this set operation. Update and Delete operations will fail if the key does not exist. Create operation will fail if the key does exist.
+    @param Key The key to perform this action towards
+    @param Value The value to set for the specified key
+    @param Tags The tags to apply to the specified key
+    @param Access The access settings to apply to the specified key. None means that the game api can not read nor write this metadata entry (this is the default). But you can supply either or both of "game_api.read" and "game_api.write"
+    @return A Metadata Action Object that you can use in the method SetMetadata
+    */
+    UFUNCTION(BlueprintPure, Category = "LootLocker Methods | Metadata", meta = (AdvancedDisplay = "Tags,Access", AutoCreateRefTerm = "Tags,Access"))
+    static FLootLockerSetMetadataAction MakeMetadataActionBase64(ELootLockerMetadataActions Action, const FString& Key, const FLootLockerMetadataBase64Value& Value, const TArray<FString>& Tags, const TArray<FString>& Access);
 
     //==================================================
     // Miscellaneous

@@ -45,7 +45,7 @@ void ULootLockerHttpClient::LogFailedRequestInformation(const FLootLockerRespons
 	UE_LOG(LogLootLockerGameSDK, Warning, TEXT("%s"), *LogString);
 }
 
-bool ULootLockerHttpClient::ResponseIsValid(const FHttpResponsePtr& InResponse, bool bWasSuccessful)
+bool ULootLockerHttpClient::ResponseIsSuccess(const FHttpResponsePtr& InResponse, bool bWasSuccessful)
 {
     if (!bWasSuccessful || !InResponse.IsValid())
         return false;
@@ -62,21 +62,17 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
         if (Ptr.IsValid())
         {
             SDKVersion = Ptr->GetDescriptor().VersionName;
+            UE_LOG(LogLootLockerGameSDK, Verbose, TEXT("LootLocker version: v%s"), *SDKVersion);
         }
     }
-
-#if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION <= 25
-	TSharedRef<IHttpRequest> Request = HttpModule->CreateRequest();
-#else
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = HttpModule->CreateRequest();
-#endif
 	Request->SetURL(endPoint);
 
 	Request->SetHeader(TEXT("User-Agent"), UserAgent);
 	Request->SetHeader(TEXT("LL-Instance-Identifier"), UserInstanceIdentifier);
     Request->SetHeader(TEXT("LL-SDK-Version"), SDKVersion);
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
-    Request->SetHeader(TEXT("Accepts"), TEXT("application/json"));
+    Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
 
     for (TTuple<FString, FString> CustomHeader : customHeaders)
     {
@@ -88,10 +84,20 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
 
 	Request->OnProcessRequestComplete().BindLambda([onCompleteRequest, this, endPoint, requestType, data](FHttpRequestPtr Req, const FHttpResponsePtr& Response, bool bWasSuccessful)
 	{
+        if (!Response.IsValid())
+        {
+            FLootLockerResponse Error = LootLockerResponseFactory::Error<FLootLockerResponse>("HTTP Response was invalid", LootLockerStaticRequestErrorStatusCodes::LL_ERROR_INVALID_HTTP);
+            LogFailedRequestInformation(Error, requestType, endPoint, data);
+            onCompleteRequest.ExecuteIfBound(Error);
+            return;
+        }
+
 		FLootLockerResponse response;
         
-        response.success = ResponseIsValid(Response, bWasSuccessful);
-		if (Response != nullptr)
+        response.success = ResponseIsSuccess(Response, bWasSuccessful);
+        response.StatusCode = Response->GetResponseCode();
+		response.FullTextFromServer = Response->GetContentAsString();
+		if (!response.success)
 		{
 			response.StatusCode = Response->GetResponseCode();
 			response.FullTextFromServer = Response->GetContentAsString();
@@ -106,6 +112,12 @@ void ULootLockerHttpClient::SendApi(const FString& endPoint, const FString& requ
 				LogFailedRequestInformation(response, requestType, endPoint, data);
 			}
 		}
+        else
+        {
+#if WITH_EDITOR
+            LogSuccessfulRequestInformation(response, requestType, endPoint, data);
+#endif
+        }
 		onCompleteRequest.ExecuteIfBound(response);
 	});
 	Request->ProcessRequest();
@@ -138,12 +150,7 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
             SDKVersion = Ptr->GetDescriptor().VersionName;
         }
     }
-
-#if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION <= 25
-	TSharedRef<IHttpRequest> Request = HttpModule->CreateRequest();
-#else
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = HttpModule->CreateRequest();
-#endif
 	Request->SetURL(endPoint);
 
     FString Boundary = "lootlockerboundary";
@@ -160,6 +167,12 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     }
 
     Request->SetVerb(requestType);
+
+    TArray<uint8> UpFileRawData;
+    if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath)) {
+        onCompleteRequest.ExecuteIfBound(LootLockerResponseFactory::Error<FLootLockerResponse>(FString::Format(TEXT("Could not read file {0}"), { FilePath }), LootLockerStaticRequestErrorStatusCodes::LL_ERROR_INVALID_INPUT));
+        return;
+    }
 
     TArray<uint8> Data;
 
@@ -199,10 +212,26 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
         response.FullTextFromServer = Response->GetContentAsString();
         if (!response.success)
         {
-            FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
-            FString RetryAfterHeader = Response->GetHeader("retry-after");
-            if(!RetryAfterHeader.IsEmpty()) {
-               response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
+            if (!Response.IsValid())
+            {
+                FLootLockerResponse Error = LootLockerResponseFactory::Error<FLootLockerResponse>("HTTP Response was invalid", LootLockerStaticRequestErrorStatusCodes::LL_ERROR_INVALID_HTTP);
+                LogFailedRequestInformation(Error, requestType, endPoint, FString("Data Stream"));
+                onCompleteRequest.ExecuteIfBound(Error);
+                return;
+            }
+            FLootLockerResponse response;
+
+            response.success = ResponseIsSuccess(Response, bWasSuccessful);
+            response.StatusCode = Response->GetResponseCode();
+            response.FullTextFromServer = Response->GetContentAsString();
+            if (!response.success)
+            {
+                FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
+                FString RetryAfterHeader = Response->GetHeader("retry-after");
+                if(!RetryAfterHeader.IsEmpty()) {
+                    response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
+                }
+                LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
             }
             LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
         }
@@ -210,4 +239,17 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
         onCompleteRequest.ExecuteIfBound(response);
     });
     Request->ProcessRequest();
+}
+
+void ULootLockerHttpClient::LogSuccessfulRequestInformation(const FLootLockerResponse& Response,	const FString& RequestMethod, const FString& Endpoint, const FString& Data)
+{
+    FString LogString = FString::Format(TEXT("{0} request to {1} succeeded"), { RequestMethod, Endpoint });
+    LogString += FString::Format(TEXT("\n   HTTP Status code : {0}"), { Response.StatusCode });
+    if (!Data.IsEmpty()) {
+        LogString += FString::Format(TEXT("\n   Request Data: {0}"), { LootLockerUtilities::ObfuscateJsonStringForLogging(Data) });
+    }
+    LogString += FString::Format(TEXT("\n   Response Data: {0}"), { Response.FullTextFromServer });
+    LogString += "\n###";
+    UE_LOG(LogLootLockerGameSDK, VeryVerbose, TEXT("%s"), *LogString);
+
 }

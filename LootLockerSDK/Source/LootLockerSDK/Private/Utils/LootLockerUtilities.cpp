@@ -16,11 +16,7 @@ const TArray<FObfuscationDetails> UObfuscationSettings::FieldsToObfuscate =
 
 FString ULootLockerEnumUtils::GetEnum(const TCHAR* Enum, int32 EnumValue)
 {
-#if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION <= 27
     const UEnum* EnumPtr = FindObject<UEnum>(StaticClass()->GetOuter(), Enum, true);
-#else
-    const UEnum* EnumPtr = FindObject<UEnum>(StaticClass()->GetOuterUPackage(), Enum, true);
-#endif
     if (!EnumPtr)
         return NSLOCTEXT("Invalid", "Invalid", "Invalid").ToString();
 
@@ -86,8 +82,23 @@ namespace LootLockerUtilities
     {
         TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
         const TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonString);
-        FJsonSerializer::Deserialize(JsonReader, JsonObject);
+        if(!FJsonSerializer::Deserialize(JsonReader, JsonObject))
+        {
+            JsonObject = nullptr;
+        };
         return JsonObject;
+    }
+
+    bool JsonArrayFromFString(const FString& JsonString, TArray<TSharedPtr<FJsonValue>>& JsonArrayOutput)
+    {
+        TArray<TSharedPtr<FJsonValue>> JsonArray;
+        const TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonString);
+        if (!FJsonSerializer::Deserialize(JsonReader, JsonArray))
+        {
+            return false;
+        };
+        JsonArrayOutput = JsonArray;
+        return true;
     }
 
     FString FStringFromJsonObject(const TSharedPtr<FJsonObject>& JsonObject)
@@ -96,6 +107,16 @@ namespace LootLockerUtilities
         TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&OutJsonString);
 
         FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter, true);
+
+        return OutJsonString;
+    }
+
+    FString FStringFromJsonArray(const TArray<TSharedPtr<FJsonValue>>& JsonArray)
+    {
+        FString OutJsonString;
+        TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&OutJsonString);
+
+        FJsonSerializer::Serialize(JsonArray, JsonWriter, true);
 
         return OutJsonString;
     }
