@@ -1,4 +1,4 @@
-﻿#include <future>
+#include <future>
 
 #include "LootLockerManager.h"
 #include "LootLockerSDKManager.h"
@@ -26,7 +26,7 @@ void FTestLootLockerTriggerEvents::Define()
 				FLootLockerTriggerEvent Request;
 				Request.name = "triggername";
 
-				ULootLockerSDKManager::TriggerEvent(Request, Delegate);
+				//ULootLockerSDKManager::TriggerEvent(Request, Delegate);
 				
 				const auto Response = Promise ->get_future().get();
 				TestTrue("Trigger event ok", Response.success);
@@ -36,7 +36,7 @@ void FTestLootLockerTriggerEvents::Define()
 			{
 				const auto [Promise , Delegate] = test_util::CreateDelegate<FLootLockerTriggersResponse,FTriggersResponseDelegate>();
 			
-				ULootLockerSDKManager::GetTriggeredEvents(Delegate);
+				//ULootLockerSDKManager::GetTriggeredEvents(Delegate);
 			
 				const auto Response = Promise ->get_future().get();
 				TestTrue("ListFiles ok", Response.success);

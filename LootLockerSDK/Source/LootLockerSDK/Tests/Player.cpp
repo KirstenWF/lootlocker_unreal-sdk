@@ -1,4 +1,4 @@
-﻿#include <future>
+#include <future>
 
 #include "LootLockerManager.h"
 #include "LootLockerSDKManager.h"
@@ -24,8 +24,8 @@ void FTestLootLockerPlayer::Define()
 
 			// Get player info
 			{
-				const auto [Promise , Delegate] = test_util::CreateDelegate<FLootLockerPlayerInfoResponse,FLootLockerPlayerInformationResponse>();
-				ULootLockerSDKManager::GetPlayerInfo(Delegate);
+				const auto [Promise , Delegate] = test_util::CreateDelegate<FLootLockerGetCurrentPlayerInfoResponse,FLootLockerGetCurrentPlayerInfoResponseDelegate>();
+				ULootLockerSDKManager::GetCurrentPlayerInfo(Delegate);
 
 				const auto Response = Promise ->get_future().get();
 				TestTrue("GetPlayerInfo ok", Response.success);

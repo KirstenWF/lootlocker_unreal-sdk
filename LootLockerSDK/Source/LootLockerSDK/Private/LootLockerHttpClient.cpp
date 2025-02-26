@@ -168,12 +168,6 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
 
     Request->SetVerb(requestType);
 
-    TArray<uint8> UpFileRawData;
-    if (!FFileHelper::LoadFileToArray(UpFileRawData, *FilePath)) {
-        onCompleteRequest.ExecuteIfBound(LootLockerResponseFactory::Error<FLootLockerResponse>(FString::Format(TEXT("Could not read file {0}"), { FilePath }), LootLockerStaticRequestErrorStatusCodes::LL_ERROR_INVALID_INPUT));
-        return;
-    }
-
     TArray<uint8> Data;
 
     const FString BeginBoundary = TEXT("\r\n--" + Boundary + "\r\n");
@@ -207,7 +201,7 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
     Request->OnProcessRequestComplete().BindLambda([onCompleteRequest, this, requestType, endPoint](FHttpRequestPtr Req, const FHttpResponsePtr& Response, bool bWasSuccessful)
     {
         FLootLockerResponse response;
-        response.success = ResponseIsValid(Response, bWasSuccessful);
+        response.success = ResponseIsSuccess(Response, bWasSuccessful);
         response.StatusCode = Response->GetResponseCode();
         response.FullTextFromServer = Response->GetContentAsString();
         if (!response.success)
@@ -219,21 +213,14 @@ void ULootLockerHttpClient::UploadRawData(const FString& endPoint, const FString
                 onCompleteRequest.ExecuteIfBound(Error);
                 return;
             }
-            FLootLockerResponse response;
 
-            response.success = ResponseIsSuccess(Response, bWasSuccessful);
-            response.StatusCode = Response->GetResponseCode();
-            response.FullTextFromServer = Response->GetContentAsString();
-            if (!response.success)
-            {
-                FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
-                FString RetryAfterHeader = Response->GetHeader("retry-after");
-                if(!RetryAfterHeader.IsEmpty()) {
-                    response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
-                }
-                LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
-            }
-            LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
+			FJsonObjectConverter::JsonObjectStringToUStruct<FLootLockerErrorData>(response.FullTextFromServer, &response.ErrorData, 0, 0);
+			FString RetryAfterHeader = Response->GetHeader("retry-after");
+			if (!RetryAfterHeader.IsEmpty())
+			{
+				response.ErrorData.Retry_after_seconds = FCString::Atoi(*RetryAfterHeader);
+			}
+			LogFailedRequestInformation(response, requestType, endPoint, FString("Data Stream"));
         }
 
         onCompleteRequest.ExecuteIfBound(response);

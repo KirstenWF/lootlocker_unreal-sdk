@@ -45,7 +45,7 @@ void ULootLockerSDKManager::VerifyPlayerAndStartSteamSession(const FString& Stea
                 OnCompletedRequest.ExecuteIfBound(AuthResponse);
                 return;
             }
-            StartSteamSession(SteamId64, OnCompletedRequest);
+            StartSteamSessionUsingTicket(SteamId64, OnCompletedRequest);
         }));
 }
 
