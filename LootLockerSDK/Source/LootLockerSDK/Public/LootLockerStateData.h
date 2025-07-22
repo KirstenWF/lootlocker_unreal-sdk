@@ -7,10 +7,11 @@
 #include "LootLockerStateData.generated.h"
 
 
-UCLASS()
+UCLASS(BlueprintType)
 class LOOTLOCKERSDK_API ULootLockerStateData : public UObject
 {
 	GENERATED_BODY()
+
 	static FString Token;
 	static FString SteamToken;
 	static FString RefreshToken;
@@ -31,6 +32,7 @@ class LOOTLOCKERSDK_API ULootLockerStateData : public UObject
 	static void LoadStateFromDiskIfNeeded();
 	static void SaveStateToDisk();
 public:
+	UFUNCTION(ScriptCallable, Category = "Loot Locker | State Data")
 	static FString GetToken();
 	static FString GetSteamToken();
 	static FString GetRefreshToken();
